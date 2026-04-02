@@ -1,0 +1,66 @@
+/* ===== Announcements ===== */
+.ann-card {
+    display: flex;
+    gap: 16px;
+    padding: 20px 0;
+    border-bottom: 1px solid var(--gray-100);
+    align-items: flex-start;
+}
+
+.ann-card:last-child {
+    border-bottom: none;
+}
+
+.ann-card-left {
+    flex-shrink: 0;
+}
+
+.ann-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+}
+
+.ann-card-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.ann-card-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+}
+
+.ann-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--gray-800);
+}
+
+.ann-message {
+    font-size: 0.875rem;
+    color: var(--gray-500);
+    line-height: 1.5;
+    margin-bottom: 8px;
+}
+
+.ann-meta {
+    display: flex;
+    gap: 16px;
+    font-size: 0.78rem;
+    color: var(--gray-400);
+}
+
+.ann-meta i {
+    margin-right: 4px;
+}
+
+.ann-actions {
+    flex-shrink: 0;
+}

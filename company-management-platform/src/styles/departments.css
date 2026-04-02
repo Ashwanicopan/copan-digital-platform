@@ -1,0 +1,100 @@
+/* ===== Departments ===== */
+.dept-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+}
+
+.dept-card {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.dept-card-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.dept-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.dept-name {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--gray-800);
+}
+
+.dept-head {
+    padding: 12px 0;
+    border-top: 1px solid var(--gray-100);
+    border-bottom: 1px solid var(--gray-100);
+}
+
+.dept-members-section {
+    padding-top: 4px;
+}
+
+.dept-members-avatars {
+    display: flex;
+    align-items: center;
+}
+
+.dept-member-avatar {
+    margin-right: -6px;
+    border: 2px solid #fff;
+}
+
+.dept-more-count {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: var(--gray-200);
+    color: var(--gray-600);
+    font-size: 0.65rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 2px;
+}
+
+.dept-locations {
+    padding-top: 4px;
+}
+
+.dept-location-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.dept-location-tag {
+    font-size: 0.75rem;
+    color: var(--gray-500);
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    padding: 3px 10px;
+    border-radius: 100px;
+}
+
+.dept-location-tag i {
+    font-size: 0.65rem;
+    margin-right: 3px;
+}
+
+.dept-view-btn {
+    margin-top: auto;
+    width: 100%;
+    justify-content: center;
+}
