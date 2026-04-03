@@ -5,6 +5,7 @@ import Avatar from "../../components/ui/Avatar";
 import Badge from "../../components/ui/Badge";
 import Modal from "../../components/ui/Modal";
 import { useData } from "../../context/DataContext";
+import { COMPANY } from "../../data/mockData";
 
 export default function EmployeeListPage() {
   const navigate = useNavigate();
@@ -14,6 +15,9 @@ export default function EmployeeListPage() {
   const [statusFilter, setStatusFilter] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", department: departments[0] || "", designation: "", location: locations[0] || "" });
+
+  const designations = COMPANY.designations || {};
+  const currentDesignations = designations[form.department] || [];
 
   const filtered = employees.filter((emp) => {
     const q = search.toLowerCase();
@@ -25,6 +29,11 @@ export default function EmployeeListPage() {
 
   const active = employees.filter((e) => e.status === "active").length;
   const onLeave = employees.filter((e) => e.status === "on-leave").length;
+
+  function handleDeptChange(dept) {
+    const deptDesignations = designations[dept] || [];
+    setForm({ ...form, department: dept, designation: deptDesignations[0] || "" });
+  }
 
   async function handleAdd(e) {
     e.preventDefault();
@@ -41,6 +50,13 @@ export default function EmployeeListPage() {
     });
     setShowModal(false);
     setForm({ name: "", email: "", department: departments[0] || "", designation: "", location: locations[0] || "" });
+  }
+
+  function openAddModal() {
+    const dept = departments[0] || "";
+    const deptDesignations = designations[dept] || [];
+    setForm({ name: "", email: "", department: dept, designation: deptDesignations[0] || "", location: locations[0] || "" });
+    setShowModal(true);
   }
 
   return (
@@ -63,7 +79,7 @@ export default function EmployeeListPage() {
               <option value="on-leave">On Leave</option>
             </select>
           </div>
-          <button className="btn btn-primary" onClick={() => setShowModal(true)}>
+          <button className="btn btn-primary" onClick={openAddModal}>
             <i className="fas fa-plus" /> Add Employee
           </button>
         </div>
@@ -81,21 +97,25 @@ export default function EmployeeListPage() {
                 <tr><th>Employee</th><th>Employee ID</th><th>Department</th><th>Designation</th><th>Location</th><th>Status</th></tr>
               </thead>
               <tbody>
-                {filtered.map((emp) => (
-                  <tr key={emp.id} className="clickable-row" onClick={() => navigate(`/employees/${emp.id}`)}>
-                    <td>
-                      <div className="employee-cell">
-                        <Avatar name={emp.name} initials={emp.avatar} />
-                        <div><div className="name">{emp.name}</div><div className="sub">{emp.email}</div></div>
-                      </div>
-                    </td>
-                    <td>{emp.employeeId}</td>
-                    <td>{emp.department}</td>
-                    <td>{emp.designation}</td>
-                    <td>{emp.location}</td>
-                    <td><Badge status={emp.status} /></td>
-                  </tr>
-                ))}
+                {filtered.length === 0 ? (
+                  <tr><td colSpan={6} style={{ textAlign: "center", color: "var(--gray-400)", padding: 32 }}>No employees found. Add your first employee to get started.</td></tr>
+                ) : (
+                  filtered.map((emp) => (
+                    <tr key={emp.id} className="clickable-row" onClick={() => navigate(`/employees/${emp.id}`)}>
+                      <td>
+                        <div className="employee-cell">
+                          <Avatar name={emp.name} initials={emp.avatar} />
+                          <div><div className="name">{emp.name}</div><div className="sub">{emp.email}</div></div>
+                        </div>
+                      </td>
+                      <td>{emp.employeeId}</td>
+                      <td>{emp.department}</td>
+                      <td>{emp.designation}</td>
+                      <td>{emp.location}</td>
+                      <td><Badge status={emp.status} /></td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -114,13 +134,16 @@ export default function EmployeeListPage() {
           </div>
           <div className="form-group">
             <label>Department</label>
-            <select value={form.department} onChange={(e) => setForm({ ...form, department: e.target.value })}>
+            <select value={form.department} onChange={(e) => handleDeptChange(e.target.value)}>
               {departments.map((d) => <option key={d} value={d}>{d}</option>)}
             </select>
           </div>
           <div className="form-group">
             <label>Designation</label>
-            <input type="text" value={form.designation} onChange={(e) => setForm({ ...form, designation: e.target.value })} required />
+            <select value={form.designation} onChange={(e) => setForm({ ...form, designation: e.target.value })} required>
+              <option value="">Select Designation</option>
+              {currentDesignations.map((d) => <option key={d} value={d}>{d}</option>)}
+            </select>
           </div>
           <div className="form-group">
             <label>Location</label>

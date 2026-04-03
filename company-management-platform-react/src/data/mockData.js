@@ -2,7 +2,12 @@ export const COMPANY = {
   name: "Copan",
   logo: "C",
   departments: ["Developer", "Designer", "HR"],
-  locations: ["Mumbai", "Bangalore", "Delhi", "Pune"],
+  locations: ["Chandigarh"],
+  designations: {
+    Developer: ["Senior Developer", "Lead Developer", "Full Stack Developer", "Frontend Developer", "Backend Developer", "Intern Developer"],
+    Designer: ["Senior UX Designer", "Lead UX Designer", "UX Designer", "Intern Designer"],
+    HR: ["HR Manager", "HR Executive", "HR Intern"],
+  },
 };
 
 export const EMPLOYEES_DATA = [];
