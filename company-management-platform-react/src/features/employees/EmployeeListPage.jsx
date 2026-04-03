@@ -4,16 +4,16 @@ import Header from "../../components/layout/Header";
 import Avatar from "../../components/ui/Avatar";
 import Badge from "../../components/ui/Badge";
 import Modal from "../../components/ui/Modal";
-import { EMPLOYEES_DATA, COMPANY } from "../../data/mockData";
+import { useData } from "../../context/DataContext";
 
 export default function EmployeeListPage() {
   const navigate = useNavigate();
+  const { employees, departments, locations, addEmployee } = useData();
   const [search, setSearch] = useState("");
   const [deptFilter, setDeptFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [showModal, setShowModal] = useState(false);
-  const [employees, setEmployees] = useState(EMPLOYEES_DATA);
-  const [form, setForm] = useState({ name: "", email: "", department: COMPANY.departments[0], designation: "", location: COMPANY.locations[0] });
+  const [form, setForm] = useState({ name: "", email: "", department: departments[0] || "", designation: "", location: locations[0] || "" });
 
   const filtered = employees.filter((emp) => {
     const q = search.toLowerCase();
@@ -26,12 +26,11 @@ export default function EmployeeListPage() {
   const active = employees.filter((e) => e.status === "active").length;
   const onLeave = employees.filter((e) => e.status === "on-leave").length;
 
-  function handleAdd(e) {
+  async function handleAdd(e) {
     e.preventDefault();
     const initials = form.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
-    const newEmp = {
+    await addEmployee({
       ...form,
-      id: employees.length + 1,
       phone: "",
       joinDate: new Date().toISOString().split("T")[0],
       salary: 0,
@@ -39,10 +38,9 @@ export default function EmployeeListPage() {
       avatar: initials,
       manager: null,
       employeeId: "CD-" + (1000 + employees.length + 1),
-    };
-    setEmployees([...employees, newEmp]);
+    });
     setShowModal(false);
-    setForm({ name: "", email: "", department: COMPANY.departments[0], designation: "", location: COMPANY.locations[0] });
+    setForm({ name: "", email: "", department: departments[0] || "", designation: "", location: locations[0] || "" });
   }
 
   return (
@@ -57,7 +55,7 @@ export default function EmployeeListPage() {
             </div>
             <select className="filter-select" value={deptFilter} onChange={(e) => setDeptFilter(e.target.value)}>
               <option value="">All Departments</option>
-              {COMPANY.departments.map((d) => <option key={d} value={d}>{d}</option>)}
+              {departments.map((d) => <option key={d} value={d}>{d}</option>)}
             </select>
             <select className="filter-select" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
               <option value="">All Status</option>
@@ -117,7 +115,7 @@ export default function EmployeeListPage() {
           <div className="form-group">
             <label>Department</label>
             <select value={form.department} onChange={(e) => setForm({ ...form, department: e.target.value })}>
-              {COMPANY.departments.map((d) => <option key={d} value={d}>{d}</option>)}
+              {departments.map((d) => <option key={d} value={d}>{d}</option>)}
             </select>
           </div>
           <div className="form-group">
@@ -127,7 +125,7 @@ export default function EmployeeListPage() {
           <div className="form-group">
             <label>Location</label>
             <select value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })}>
-              {COMPANY.locations.map((l) => <option key={l} value={l}>{l}</option>)}
+              {locations.map((l) => <option key={l} value={l}>{l}</option>)}
             </select>
           </div>
           <div className="form-actions">

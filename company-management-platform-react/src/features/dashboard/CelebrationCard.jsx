@@ -1,12 +1,11 @@
 import Avatar from "../../components/ui/Avatar";
-import { EMPLOYEES_DATA } from "../../data/mockData";
+import { useData } from "../../context/DataContext";
 
-function getUpcomingEvents() {
+function getUpcomingEvents(employees) {
   const today = new Date();
   const events = [];
 
-  EMPLOYEES_DATA.forEach((emp) => {
-    // Birthday check (within next 7 days)
+  employees.forEach((emp) => {
     if (emp.dob) {
       const bday = new Date(emp.dob);
       const thisYearBday = new Date(today.getFullYear(), bday.getMonth(), bday.getDate());
@@ -14,21 +13,12 @@ function getUpcomingEvents() {
       if (diff >= 0 && diff <= 7) {
         const age = today.getFullYear() - bday.getFullYear();
         events.push({
-          id: `bday-${emp.id}`,
-          type: "birthday",
-          icon: "fa-birthday-cake",
-          color: "#db2777",
-          bg: "#fdf2f8",
-          employee: emp,
+          id: `bday-${emp.id}`, type: "birthday", icon: "fa-birthday-cake", color: "#db2777", bg: "#fdf2f8", employee: emp,
           label: diff === 0 ? "Birthday Today!" : diff === 1 ? "Birthday Tomorrow" : `Birthday in ${diff} days`,
-          detail: `Turning ${age}`,
-          daysAway: diff,
-          date: thisYearBday,
+          detail: `Turning ${age}`, daysAway: diff, date: thisYearBday,
         });
       }
     }
-
-    // Work Anniversary check (within next 7 days)
     if (emp.joinDate) {
       const joinDt = new Date(emp.joinDate);
       const thisYearAnniv = new Date(today.getFullYear(), joinDt.getMonth(), joinDt.getDate());
@@ -36,48 +26,32 @@ function getUpcomingEvents() {
       const years = today.getFullYear() - joinDt.getFullYear();
       if (diff >= 0 && diff <= 7 && years > 0) {
         events.push({
-          id: `anniv-${emp.id}`,
-          type: "anniversary",
-          icon: "fa-award",
-          color: "#7c3aed",
-          bg: "#f5f3ff",
-          employee: emp,
+          id: `anniv-${emp.id}`, type: "anniversary", icon: "fa-award", color: "#7c3aed", bg: "#f5f3ff", employee: emp,
           label: diff === 0 ? "Work Anniversary Today!" : diff === 1 ? "Work Anniversary Tomorrow" : `Anniversary in ${diff} days`,
-          detail: `${years} year${years > 1 ? "s" : ""} at the company`,
-          daysAway: diff,
-          date: thisYearAnniv,
+          detail: `${years} year${years > 1 ? "s" : ""} at the company`, daysAway: diff, date: thisYearAnniv,
         });
       }
     }
-
-    // New joiner check (joined within the last 30 days)
     if (emp.joinDate) {
       const joinDt = new Date(emp.joinDate);
       const diff = Math.floor((today - joinDt) / 86400000);
       if (diff >= 0 && diff <= 30) {
         events.push({
-          id: `newjoin-${emp.id}`,
-          type: "new-joiner",
-          icon: "fa-user-plus",
-          color: "#0891b2",
-          bg: "#ecfeff",
-          employee: emp,
+          id: `newjoin-${emp.id}`, type: "new-joiner", icon: "fa-user-plus", color: "#0891b2", bg: "#ecfeff", employee: emp,
           label: diff === 0 ? "Joined Today!" : `Joined ${diff} day${diff > 1 ? "s" : ""} ago`,
-          detail: `${emp.designation}, ${emp.department}`,
-          daysAway: -diff,
-          date: joinDt,
+          detail: `${emp.designation}, ${emp.department}`, daysAway: -diff, date: joinDt,
         });
       }
     }
   });
 
-  // Sort: today first, then by closest upcoming
   events.sort((a, b) => a.daysAway - b.daysAway);
   return events;
 }
 
 export default function CelebrationCard() {
-  const events = getUpcomingEvents();
+  const { employees } = useData();
+  const events = getUpcomingEvents(employees);
 
   return (
     <div className="card">
@@ -107,10 +81,7 @@ export default function CelebrationCard() {
                       <div className="sub">{event.detail}</div>
                     </div>
                   </div>
-                  <span
-                    className="celebration-tag"
-                    style={{ background: event.bg, color: event.color }}
-                  >
+                  <span className="celebration-tag" style={{ background: event.bg, color: event.color }}>
                     {event.type === "birthday" && "Birthday"}
                     {event.type === "anniversary" && "Anniversary"}
                     {event.type === "new-joiner" && "New Joiner"}

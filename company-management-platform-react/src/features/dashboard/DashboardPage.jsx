@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { useData } from "../../context/DataContext";
 import Header from "../../components/layout/Header";
 import StatCard from "../../components/ui/StatCard";
 import Avatar from "../../components/ui/Avatar";
@@ -7,16 +8,15 @@ import Badge from "../../components/ui/Badge";
 import HolidayCard from "./HolidayCard";
 import WelcomeBannerClock from "./WelcomeBannerClock";
 import CelebrationCard from "./CelebrationCard";
-import { EMPLOYEES_DATA, LEAVE_REQUESTS_DATA, COMPANY } from "../../data/mockData";
 
 export default function DashboardPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const total = EMPLOYEES_DATA.length;
-  const active = EMPLOYEES_DATA.filter((e) => e.status === "active").length;
-  const onLeave = EMPLOYEES_DATA.filter((e) => e.status === "on-leave").length;
-  const pending = LEAVE_REQUESTS_DATA.filter((l) => l.status === "pending").length;
-  const departments = [...new Set(EMPLOYEES_DATA.map((e) => e.department))].length;
+  const { employees, leaveRequests } = useData();
+  const total = employees.length;
+  const active = employees.filter((e) => e.status === "active").length;
+  const onLeave = employees.filter((e) => e.status === "on-leave").length;
+  const pending = leaveRequests.filter((l) => l.status === "pending").length;
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good Morning" : hour < 17 ? "Good Afternoon" : "Good Evening";
@@ -69,7 +69,7 @@ export default function DashboardPage() {
                   <tbody>
                     {(() => {
                       const todayStr = new Date().toISOString().split("T")[0];
-                      const todayLeaves = LEAVE_REQUESTS_DATA.filter((l) => {
+                      const todayLeaves = leaveRequests.filter((l) => {
                         const isOnLeaveToday = l.from <= todayStr && l.to >= todayStr;
                         const isRequestedToday = l.appliedOn === todayStr;
                         return isOnLeaveToday || isRequestedToday || l.status === "pending";
@@ -78,7 +78,7 @@ export default function DashboardPage() {
                         return <tr><td colSpan={4} style={{ textAlign: "center", color: "var(--gray-400)", padding: "24px" }}>No leave requests for today</td></tr>;
                       }
                       return todayLeaves.map((l) => {
-                        const emp = EMPLOYEES_DATA.find((e) => e.id === l.employeeId);
+                        const emp = employees.find((e) => e.id === l.employeeId);
                         return (
                           <tr key={l.id}>
                             <td>

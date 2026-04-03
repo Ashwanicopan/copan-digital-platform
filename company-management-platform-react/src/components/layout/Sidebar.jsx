@@ -1,6 +1,6 @@
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { COMPANY, LEAVE_REQUESTS_DATA } from "../../data/mockData";
+import { useData } from "../../context/DataContext";
 
 const navItems = [
   { section: "Main", items: [
@@ -17,7 +17,8 @@ const navItems = [
 
 export default function Sidebar() {
   const { user, logout } = useAuth();
-  const pendingLeaves = LEAVE_REQUESTS_DATA.filter((l) => l.status === "pending").length;
+  const { leaveRequests } = useData();
+  const pendingLeaves = leaveRequests.filter((l) => l.status === "pending").length;
   const isAdmin = user?.isAdmin;
 
   return (

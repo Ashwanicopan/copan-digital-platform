@@ -2,15 +2,16 @@ import { useState } from "react";
 import Header from "../../components/layout/Header";
 import Avatar from "../../components/ui/Avatar";
 import Badge from "../../components/ui/Badge";
-import { ATTENDANCE_DATA, EMPLOYEES_DATA } from "../../data/mockData";
+import { useData } from "../../context/DataContext";
 import { getCurrentDate } from "../../utils/helpers";
 import { useClock } from "../../hooks/useClock";
 
 export default function AttendancePage() {
   const time = useClock();
+  const { attendance, employees, clockIn, clockOut } = useData();
   const [dateFilter, setDateFilter] = useState("2026-04-01");
 
-  const logs = ATTENDANCE_DATA.filter((a) => a.date === dateFilter);
+  const logs = attendance.filter((a) => a.date === dateFilter);
   const present = logs.filter((a) => a.status === "present").length;
   const absent = logs.filter((a) => a.status === "absent").length;
   const leave = logs.filter((a) => a.status === "on-leave").length;
@@ -28,8 +29,8 @@ export default function AttendancePage() {
             <div className="date">{getCurrentDate()}</div>
           </div>
           <div className="clock-actions">
-            <button className="btn-clock btn-clock-in" onClick={() => alert("Clocked in at " + time)}>Clock In</button>
-            <button className="btn-clock btn-clock-out" onClick={() => alert("Clocked out at " + time)}>Clock Out</button>
+            <button className="btn-clock btn-clock-in" onClick={async () => { const t = await clockIn(1); alert("Clocked in at " + t); }}>Clock In</button>
+            <button className="btn-clock btn-clock-out" onClick={async () => { const t = await clockOut(1); alert("Clocked out at " + t); }}>Clock Out</button>
           </div>
         </div>
 
@@ -60,7 +61,7 @@ export default function AttendancePage() {
               <thead><tr><th>Employee</th><th>Clock In</th><th>Clock Out</th><th>Hours</th><th>Status</th></tr></thead>
               <tbody>
                 {logs.map((log) => {
-                  const emp = EMPLOYEES_DATA.find((e) => e.id === log.employeeId);
+                  const emp = employees.find((e) => e.id === log.employeeId);
                   if (!emp) return null;
                   return (
                     <tr key={log.employeeId}>

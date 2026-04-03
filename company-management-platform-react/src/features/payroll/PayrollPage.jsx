@@ -2,10 +2,12 @@ import { useState } from "react";
 import Header from "../../components/layout/Header";
 import Avatar from "../../components/ui/Avatar";
 import Badge from "../../components/ui/Badge";
-import { PAYROLL_DATA, EMPLOYEES_DATA } from "../../data/mockData";
-import { formatCurrency } from "../../utils/helpers";
+import { useData } from "../../context/DataContext";
+import { formatCurrency, formatDate, numberToWords } from "../../utils/helpers";
+import copanLogo from "../../assets/images/copan-logo.svg";
 
 export default function PayrollPage() {
+  const { payroll: PAYROLL_DATA, employees: EMPLOYEES_DATA } = useData();
   const [selectedPayslip, setSelectedPayslip] = useState(null);
 
   const totalGross = PAYROLL_DATA.reduce((s, p) => s + p.grossEarnings, 0);
@@ -15,7 +17,7 @@ export default function PayrollPage() {
   const totalLOP = PAYROLL_DATA.reduce((s, p) => s + p.lopDeduction, 0);
 
   function openPayslip(p) {
-    const emp = EMPLOYEES_DATA.find((e) => e.id === p.employeeId);
+    const emp = p.emp || EMPLOYEES_DATA.find((e) => e.id === p.employeeId);
     setSelectedPayslip({ ...p, emp });
   }
 
@@ -49,14 +51,14 @@ export default function PayrollPage() {
           </div>
           <div className="stat-card">
             <div className="stat-info">
-              <h3>TDS Collected</h3>
+              <h3>Tax Deducted at Source</h3>
               <div className="stat-value" style={{ fontSize: "1.4rem" }}>{formatCurrency(totalTDS)}</div>
             </div>
             <div className="stat-icon orange"><i className="fas fa-file-invoice" /></div>
           </div>
           <div className="stat-card">
             <div className="stat-info">
-              <h3>LOP Deductions</h3>
+              <h3>Loss of Pay Deductions</h3>
               <div className="stat-value" style={{ fontSize: "1.4rem", color: "var(--danger)" }}>{formatCurrency(totalLOP)}</div>
             </div>
             <div className="stat-icon red"><i className="fas fa-clock" /></div>
@@ -82,7 +84,7 @@ export default function PayrollPage() {
                   <th>Working Days</th>
                   <th>Present</th>
                   <th>Late</th>
-                  <th>LOP</th>
+                  <th>Loss of Pay</th>
                   <th>Gross</th>
                   <th>Deductions</th>
                   <th>Net Pay</th>
@@ -146,157 +148,149 @@ export default function PayrollPage() {
 
 function PayslipDetail({ data, onClose }) {
   const { emp } = data;
+  const pfAccountNo = `PYBNG00631020000${emp.id.toString().padStart(3, "0")}28 JXOPE1760A`;
 
   return (
-    <div className="payslip">
-      {/* Header */}
-      <div className="payslip-header">
+    <div className="payslip-doc">
+      {/* Close Button */}
+      <button className="payslip-doc-close" onClick={onClose}><i className="fas fa-times" /></button>
+
+      {/* Document Header */}
+      <div className="payslip-doc-header">
         <div>
-          <h2>Payslip - {data.month}</h2>
-          <p className="text-muted">Copan Digital</p>
+          <h1 className="payslip-doc-title">PAYSLIP <span>{data.month.toUpperCase()}</span></h1>
+          <p className="payslip-doc-company">COPAN CONSULTANCY SERVICES PRIVATE LIMITED</p>
+          <p className="payslip-doc-address">FLAT NUMBER 5, 3RD FLOOR, HIBISCUS PARK</p>
+          <p className="payslip-doc-address">SECTOR 25</p>
+          <p className="payslip-doc-address">Panchkula, Haryana 134116</p>
         </div>
-        <button className="btn btn-outline btn-sm" onClick={onClose}><i className="fas fa-times" /></button>
+        <div className="payslip-doc-logo">
+          <img src={copanLogo} alt="Copan" />
+        </div>
       </div>
+
+      <div className="payslip-doc-divider" />
 
       {/* Employee Info */}
-      <div className="payslip-employee">
-        <Avatar name={emp.name} initials={emp.avatar} size="lg" />
-        <div>
-          <h3>{emp.name}</h3>
-          <p className="text-muted">{emp.designation} &middot; {emp.department}</p>
-          <p className="text-xs text-muted">Employee ID: {emp.employeeId}</p>
+      <h3 className="payslip-doc-emp-name">{emp.name.toUpperCase()}</h3>
+      <table className="payslip-doc-info-table">
+        <tbody>
+          <tr>
+            <td className="payslip-doc-info-label">Employee ID</td>
+            <td className="payslip-doc-info-value">{emp.employeeId}</td>
+            <td className="payslip-doc-info-label">Date of Joining</td>
+            <td className="payslip-doc-info-value">{formatDate(emp.joinDate)}</td>
+            <td className="payslip-doc-info-label">Department</td>
+            <td className="payslip-doc-info-value">{emp.department}</td>
+          </tr>
+          <tr>
+            <td className="payslip-doc-info-label">Designation</td>
+            <td className="payslip-doc-info-value">{emp.designation}</td>
+            <td className="payslip-doc-info-label">Bank Account Number</td>
+            <td className="payslip-doc-info-value">{emp.bankAccount}</td>
+            <td className="payslip-doc-info-label">Location</td>
+            <td className="payslip-doc-info-value">{emp.location}</td>
+          </tr>
+          <tr>
+            <td className="payslip-doc-info-label">Payment Mode</td>
+            <td className="payslip-doc-info-value">{emp.paymentMode}</td>
+            <td className="payslip-doc-info-label">Bank Name</td>
+            <td className="payslip-doc-info-value">{emp.bankName}</td>
+            <td className="payslip-doc-info-label">Permanent Account Number</td>
+            <td className="payslip-doc-info-value">{emp.pan}</td>
+          </tr>
+          <tr>
+            <td className="payslip-doc-info-label">Universal Account Number</td>
+            <td className="payslip-doc-info-value">{emp.uan}</td>
+            <td className="payslip-doc-info-label">Provident Fund Account Number</td>
+            <td className="payslip-doc-info-value" colSpan="3">{pfAccountNo}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div className="payslip-doc-divider" />
+
+      {/* Salary Details */}
+      <h4 className="payslip-doc-section-title">SALARY DETAILS</h4>
+      <table className="payslip-doc-salary-summary">
+        <thead>
+          <tr>
+            <th>Number of Payable Days</th>
+            <th>Gross Working Days</th>
+            <th>Loss of Pay Days</th>
+            <th>Days Payable</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>{data.totalWorkingDays}.0</td>
+            <td>{data.totalWorkingDays}.0</td>
+            <td>{data.unpaidLeaveDays > 0 ? data.unpaidLeaveDays.toFixed(2) : "0.00"}</td>
+            <td>{data.payableDays}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div className="payslip-doc-divider" />
+
+      {/* Earnings & Contributions side by side */}
+      <div className="payslip-doc-breakdown">
+        <div className="payslip-doc-earnings">
+          <h4 className="payslip-doc-col-title">EARNINGS</h4>
+          <table className="payslip-doc-table">
+            <tbody>
+              <tr><td>Basic</td><td className="payslip-doc-amount">{formatCurrency(data.basic)}</td></tr>
+              <tr><td>House Rent Allowance</td><td className="payslip-doc-amount">{formatCurrency(data.hra)}</td></tr>
+              <tr><td>Medical Allowance</td><td className="payslip-doc-amount">{formatCurrency(data.medical)}</td></tr>
+              <tr><td>Special Allowance</td><td className="payslip-doc-amount">{formatCurrency(data.specialAllowance)}</td></tr>
+              <tr><td>Transport Allowance</td><td className="payslip-doc-amount">{formatCurrency(data.conveyance)}</td></tr>
+              <tr className="payslip-doc-total-row">
+                <td><strong>Total Earnings (A)</strong></td>
+                <td className="payslip-doc-amount"><strong>{formatCurrency(data.grossEarnings)}</strong></td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-        <div className="payslip-ctc">
-          <div className="text-xs text-muted">Monthly CTC</div>
-          <div className="font-semibold" style={{ fontSize: "1.1rem" }}>{formatCurrency(data.ctc)}</div>
+        <div className="payslip-doc-contributions">
+          <h4 className="payslip-doc-col-title">CONTRIBUTIONS</h4>
+          <table className="payslip-doc-table">
+            <tbody>
+              <tr><td>Provident Fund - Employee</td><td className="payslip-doc-amount">{formatCurrency(data.pfEmployee)}</td></tr>
+              <tr><td>Provident Fund - Employer</td><td className="payslip-doc-amount">{formatCurrency(data.pfEmployer)}</td></tr>
+              <tr className="payslip-doc-total-row">
+                <td><strong>Total Contributions (B)</strong></td>
+                <td className="payslip-doc-amount"><strong>{formatCurrency(data.pfEmployee + data.pfEmployer)}</strong></td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
 
-      {/* Attendance Summary */}
-      <div className="payslip-section">
-        <h4 className="payslip-section-title">
-          <i className="fas fa-calendar-check" /> Attendance Summary
-        </h4>
-        <div className="payslip-attendance-grid">
-          <div className="payslip-att-item">
-            <span className="payslip-att-value">{data.totalCalendarDays}</span>
-            <span className="payslip-att-label">Calendar Days</span>
-          </div>
-          <div className="payslip-att-item">
-            <span className="payslip-att-value">{data.weekends}</span>
-            <span className="payslip-att-label">Weekends</span>
-          </div>
-          <div className="payslip-att-item">
-            <span className="payslip-att-value">{data.holidays}</span>
-            <span className="payslip-att-label">Holidays</span>
-          </div>
-          <div className="payslip-att-item highlight">
-            <span className="payslip-att-value">{data.totalWorkingDays}</span>
-            <span className="payslip-att-label">Working Days</span>
-          </div>
-          <div className="payslip-att-item success">
-            <span className="payslip-att-value">{data.presentDays}</span>
-            <span className="payslip-att-label">Present</span>
-          </div>
-          <div className="payslip-att-item">
-            <span className="payslip-att-value">{data.paidLeaveDays}</span>
-            <span className="payslip-att-label">Paid Leave</span>
-          </div>
-          <div className="payslip-att-item warn">
-            <span className="payslip-att-value">{data.lateDays}</span>
-            <span className="payslip-att-label">Late Marks</span>
-          </div>
-          <div className="payslip-att-item danger">
-            <span className="payslip-att-value">{data.unpaidLeaveDays}</span>
-            <span className="payslip-att-label">LOP Days</span>
-          </div>
-        </div>
-        {data.lateDays > 0 && (
-          <div className="payslip-note warn">
-            <i className="fas fa-info-circle" /> {data.lateDays} late mark{data.lateDays > 1 ? "s" : ""} &rarr; {data.lateDeductionDays} day{data.lateDeductionDays !== 1 ? "s" : ""} LOP (every 3 lates = 0.5 day LOP)
-          </div>
-        )}
-        <div className="payslip-payable">
-          <span>Payable Days</span>
-          <span className="font-semibold">{data.payableDays} / {data.totalWorkingDays}</span>
-        </div>
-      </div>
+      <div className="payslip-doc-divider" />
 
-      {/* Earnings & Deductions side by side */}
-      <div className="payslip-breakdown">
-        {/* Earnings */}
-        <div className="payslip-section">
-          <h4 className="payslip-section-title success-title">
-            <i className="fas fa-plus-circle" /> Earnings
-          </h4>
-          <div className="payslip-rows">
-            <PayslipRow label="Basic Salary" sublabel="50% of CTC" amount={data.basic} />
-            <PayslipRow label="HRA" sublabel="40% of Basic" amount={data.hra} />
-            <PayslipRow label="Special Allowance" sublabel="CTC - Basic - HRA - PF(ER)" amount={data.specialAllowance} />
-            <PayslipRow label="Conveyance Allowance" sublabel="Fixed" amount={data.conveyance} />
-            <PayslipRow label="Medical Allowance" sublabel="Fixed" amount={data.medical} />
-          </div>
-          <div className="payslip-total success">
-            <span>Gross Earnings</span>
-            <span>{formatCurrency(data.grossEarnings)}</span>
-          </div>
-        </div>
+      {/* Net Salary */}
+      <table className="payslip-doc-net-table">
+        <tbody>
+          <tr>
+            <td className="payslip-doc-net-label">Net Salary Payable ( A - B )</td>
+            <td className="payslip-doc-net-value">{formatCurrency(data.netPay)}</td>
+          </tr>
+          <tr>
+            <td className="payslip-doc-net-label">Net Salary in words</td>
+            <td className="payslip-doc-net-words">{numberToWords(data.netPay)}</td>
+          </tr>
+        </tbody>
+      </table>
 
-        {/* Deductions */}
-        <div className="payslip-section">
-          <h4 className="payslip-section-title danger-title">
-            <i className="fas fa-minus-circle" /> Deductions
-          </h4>
-          <div className="payslip-rows">
-            <PayslipRow label="PF (Employee)" sublabel="12% of Basic (max ₹15K)" amount={data.pfEmployee} negative />
-            <PayslipRow label="Professional Tax" sublabel="Fixed ₹200/month" amount={data.professionalTax} negative />
-            <PayslipRow label="TDS (Income Tax)" sublabel="New Regime, annualized/12" amount={data.tds} negative />
-            {data.lopDeduction > 0 && (
-              <PayslipRow label="LOP Deduction" sublabel={`${data.unpaidLeaveDays} days × ₹${Math.round(data.grossEarnings / data.totalWorkingDays)}/day`} amount={data.lopDeduction} negative />
-            )}
-          </div>
-          <div className="payslip-total danger">
-            <span>Total Deductions</span>
-            <span>{formatCurrency(data.totalDeductions)}</span>
-          </div>
-        </div>
-      </div>
+      <div className="payslip-doc-divider" />
 
-      {/* Net Pay */}
-      <div className="payslip-net">
-        <div className="payslip-net-row">
-          <div>
-            <div className="payslip-net-label">Net Pay</div>
-            <div className="payslip-net-formula">Gross Earnings ({formatCurrency(data.grossEarnings)}) - Deductions ({formatCurrency(data.totalDeductions)})</div>
-          </div>
-          <div className="payslip-net-amount">{formatCurrency(data.netPay)}</div>
-        </div>
-      </div>
-
-      {/* Employer Contribution (info) */}
-      <div className="payslip-employer">
-        <h4 className="payslip-section-title">
-          <i className="fas fa-building" /> Employer Contributions (not deducted from salary)
-        </h4>
-        <div className="payslip-rows">
-          <PayslipRow label="PF (Employer)" sublabel="12% of Basic (max ₹15K)" amount={data.pfEmployer} info />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function PayslipRow({ label, sublabel, amount, negative, info }) {
-  const color = negative ? "var(--danger)" : info ? "var(--info)" : "var(--gray-800)";
-  return (
-    <div className="payslip-row">
-      <div>
-        <div className="payslip-row-label">{label}</div>
-        {sublabel && <div className="payslip-row-sub">{sublabel}</div>}
-      </div>
-      <div className="payslip-row-amount" style={{ color }}>
-        {negative ? "- " : ""}{formatCurrency(amount)}
-      </div>
+      {/* Note */}
+      <p className="payslip-doc-note">
+        <strong>*Note -</strong> All amounts displayed in this payslip are in <strong>Indian Rupees (INR)</strong>
+      </p>
+      <p className="payslip-doc-disclaimer">
+        * This is a computer generated statement does not require signature.
+      </p>
     </div>
   );
 }

@@ -1,10 +1,10 @@
-import { HOLIDAYS } from "../../data/mockData";
+import { useData } from "../../context/DataContext";
 import { formatDate } from "../../utils/helpers";
 
-function getUpcomingHolidays() {
+function getUpcomingHolidays(holidays) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  return HOLIDAYS
+  return holidays
     .filter((h) => new Date(h.date) >= today)
     .slice(0, 5)
     .map((h) => {
@@ -16,7 +16,8 @@ function getUpcomingHolidays() {
 }
 
 export default function HolidayCard() {
-  const upcoming = getUpcomingHolidays();
+  const { holidays } = useData();
+  const upcoming = getUpcomingHolidays(holidays);
   const next = upcoming[0];
 
   return (

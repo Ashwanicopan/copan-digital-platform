@@ -2,27 +2,28 @@ import { useState } from "react";
 import Header from "../../components/layout/Header";
 import Modal from "../../components/ui/Modal";
 import { useAuth } from "../../context/AuthContext";
-import { ANNOUNCEMENTS_DATA } from "../../data/mockData";
+import { useData } from "../../context/DataContext";
 import { formatDate, getAnnouncementCategory } from "../../utils/helpers";
 
 export default function AnnouncementsPage() {
   const { user: CURRENT_USER } = useAuth();
-  const [announcements, setAnnouncements] = useState(ANNOUNCEMENTS_DATA);
+  const { announcements, addAnnouncement, deleteAnnouncement } = useData();
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState({ title: "", message: "", category: "general" });
 
-  function handleCreate(e) {
+  async function handleCreate(e) {
     e.preventDefault();
-    setAnnouncements([
-      { id: Date.now(), ...form, date: new Date().toISOString().split("T")[0], author: CURRENT_USER.name },
-      ...announcements,
-    ]);
+    await addAnnouncement({
+      ...form,
+      author: CURRENT_USER.name,
+      authorId: CURRENT_USER.id,
+    });
     setShowModal(false);
     setForm({ title: "", message: "", category: "general" });
   }
 
-  function handleDelete(id) {
-    setAnnouncements(announcements.filter((a) => a.id !== id));
+  async function handleDelete(id) {
+    await deleteAnnouncement(id);
   }
 
   return (

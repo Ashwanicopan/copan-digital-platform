@@ -4,30 +4,37 @@ import Avatar from "../../components/ui/Avatar";
 import Badge from "../../components/ui/Badge";
 import Modal from "../../components/ui/Modal";
 import { useAuth } from "../../context/AuthContext";
-import { LEAVE_REQUESTS_DATA, LEAVE_BALANCE_DATA, EMPLOYEES_DATA } from "../../data/mockData";
+import { useData } from "../../context/DataContext";
 import { formatDate } from "../../utils/helpers";
 
 export default function LeavePage() {
   const { user: CURRENT_USER, canApproveLeave } = useAuth();
-  const [requests, setRequests] = useState(LEAVE_REQUESTS_DATA);
+  const { leaveRequests, leaveBalances, employees, addLeaveRequest, updateLeaveStatus } = useData();
   const [tab, setTab] = useState("all");
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState({ type: "Casual Leave", from: "", to: "", reason: "" });
 
-  const userLeave = LEAVE_BALANCE_DATA.find((l) => l.employeeId === CURRENT_USER.id) || { casual: 10, sick: 7, earned: 15, compOff: 2 };
-  const filtered = tab === "all" ? requests : requests.filter((l) => l.status === tab);
+  const userLeave = leaveBalances.filter((l) => l.employeeId === CURRENT_USER.id);
+  const casualBal = userLeave.find((l) => l.type === "Casual Leave")?.balance ?? 10;
+  const sickBal = userLeave.find((l) => l.type === "Sick Leave")?.balance ?? 7;
+  const earnedBal = userLeave.find((l) => l.type === "Earned Leave")?.balance ?? 15;
+  const compOffBal = userLeave.find((l) => l.type === "Comp Off")?.balance ?? 2;
 
-  function handleAction(id, status) {
-    setRequests((prev) => prev.map((l) => (l.id === id ? { ...l, status } : l)));
+  const filtered = tab === "all" ? leaveRequests : leaveRequests.filter((l) => l.status === tab);
+
+  async function handleAction(id, status) {
+    await updateLeaveStatus(id, status);
   }
 
-  function handleApply(e) {
+  async function handleApply(e) {
     e.preventDefault();
     const days = Math.ceil((new Date(form.to) - new Date(form.from)) / 86400000) + 1;
-    setRequests([
-      { id: Date.now(), employeeId: CURRENT_USER.id, employeeName: CURRENT_USER.name, ...form, days, status: "pending", appliedOn: new Date().toISOString().split("T")[0] },
-      ...requests,
-    ]);
+    await addLeaveRequest({
+      employeeId: CURRENT_USER.id,
+      employeeName: CURRENT_USER.name,
+      ...form,
+      days,
+    });
     setShowModal(false);
     setForm({ type: "Casual Leave", from: "", to: "", reason: "" });
   }
@@ -38,10 +45,10 @@ export default function LeavePage() {
       <div className="page-content">
         <div className="leave-balance-grid">
           {[
-            { label: "Casual Leave", count: userLeave.casual, total: 12 },
-            { label: "Sick Leave", count: userLeave.sick, total: 7 },
-            { label: "Earned Leave", count: userLeave.earned, total: 18 },
-            { label: "Comp Off", count: userLeave.compOff, total: null },
+            { label: "Casual Leave", count: casualBal, total: 12 },
+            { label: "Sick Leave", count: sickBal, total: 7 },
+            { label: "Earned Leave", count: earnedBal, total: 18 },
+            { label: "Comp Off", count: compOffBal, total: null },
           ].map((b) => (
             <div className="leave-balance-card" key={b.label}>
               <div className="leave-type">{b.label}</div>
@@ -72,7 +79,7 @@ export default function LeavePage() {
               <thead><tr><th>Employee</th><th>Type</th><th>From</th><th>To</th><th>Days</th><th>Reason</th><th>Status</th><th>Actions</th></tr></thead>
               <tbody>
                 {filtered.map((l) => {
-                  const emp = EMPLOYEES_DATA.find((e) => e.id === l.employeeId);
+                  const emp = employees.find((e) => e.id === l.employeeId);
                   return (
                     <tr key={l.id}>
                       <td>

@@ -5,13 +5,12 @@ import Avatar from "../../components/ui/Avatar";
 import Badge from "../../components/ui/Badge";
 import Modal from "../../components/ui/Modal";
 import { useAuth } from "../../context/AuthContext";
-import { TEAMS_DATA, EMPLOYEES_DATA } from "../../data/mockData";
-import { getAvatarColor } from "../../utils/helpers";
+import { useData } from "../../context/DataContext";
 
 export default function TeamsPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [teams, setTeams] = useState(TEAMS_DATA);
+  const { teams, employees, addTeam, updateTeam, deleteTeam } = useData();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingTeam, setEditingTeam] = useState(null);
@@ -19,53 +18,40 @@ export default function TeamsPage() {
 
   const isAdmin = user?.isAdmin;
 
-  // Managers see only their teams, admins see all
   const visibleTeams = isAdmin
     ? teams
     : teams.filter((t) => t.managerId === user?.id || t.memberIds.includes(user?.id));
 
   function getManager(id) {
-    return EMPLOYEES_DATA.find((e) => e.id === id);
+    return employees.find((e) => e.id === id);
   }
 
-  function handleCreate(e) {
+  async function handleCreate(e) {
     e.preventDefault();
-    const newTeam = {
-      id: Date.now(),
+    await addTeam({
       name: form.name,
       description: form.description,
       managerId: Number(form.managerId),
       memberIds: form.memberIds.map(Number),
-    };
-    const updated = [...teams, newTeam];
-    setTeams(updated);
-    TEAMS_DATA.push(newTeam);
+    });
     setShowCreateModal(false);
     setForm({ name: "", description: "", managerId: "", memberIds: [] });
   }
 
-  function handleEdit(e) {
+  async function handleEdit(e) {
     e.preventDefault();
-    const updated = teams.map((t) =>
-      t.id === editingTeam.id
-        ? { ...t, name: form.name, description: form.description, managerId: Number(form.managerId), memberIds: form.memberIds.map(Number) }
-        : t
-    );
-    setTeams(updated);
-    // Also update the shared reference
-    const idx = TEAMS_DATA.findIndex((t) => t.id === editingTeam.id);
-    if (idx !== -1) {
-      TEAMS_DATA[idx] = updated.find((t) => t.id === editingTeam.id);
-    }
+    await updateTeam(editingTeam.id, {
+      name: form.name,
+      description: form.description,
+      managerId: Number(form.managerId),
+      memberIds: form.memberIds.map(Number),
+    });
     setShowEditModal(false);
     setEditingTeam(null);
   }
 
-  function handleDelete(id) {
-    const updated = teams.filter((t) => t.id !== id);
-    setTeams(updated);
-    const idx = TEAMS_DATA.findIndex((t) => t.id === id);
-    if (idx !== -1) TEAMS_DATA.splice(idx, 1);
+  async function handleDelete(id) {
+    await deleteTeam(id);
   }
 
   function openEditModal(team) {
@@ -88,13 +74,11 @@ export default function TeamsPage() {
     }));
   }
 
-  // Get employees who can be managers (exclude the ones who are just regular employees)
-  const potentialManagers = EMPLOYEES_DATA.filter((e) =>
+  const potentialManagers = employees.filter((e) =>
     e.designation.includes("Manager") || e.designation.includes("Lead") || e.designation.includes("VP")
   );
 
-  // Get employees who can be members (exclude the selected manager)
-  const potentialMembers = EMPLOYEES_DATA.filter((e) => String(e.id) !== form.managerId);
+  const potentialMembers = employees.filter((e) => String(e.id) !== form.managerId);
 
   function renderTeamForm(onSubmit, submitLabel) {
     return (
@@ -161,7 +145,7 @@ export default function TeamsPage() {
         <div className="teams-grid">
           {visibleTeams.map((team) => {
             const manager = getManager(team.managerId);
-            const members = team.memberIds.map((id) => EMPLOYEES_DATA.find((e) => e.id === id)).filter(Boolean);
+            const members = team.memberIds.map((id) => employees.find((e) => e.id === id)).filter(Boolean);
 
             return (
               <div className="card team-card" key={team.id}>
@@ -182,7 +166,6 @@ export default function TeamsPage() {
                   )}
                 </div>
 
-                {/* Manager */}
                 <div className="team-manager-section">
                   <div className="detail-label">Team Manager</div>
                   {manager ? (
@@ -199,7 +182,6 @@ export default function TeamsPage() {
                   )}
                 </div>
 
-                {/* Members */}
                 <div className="team-members-section">
                   <div className="detail-label">{members.length} Member{members.length !== 1 ? "s" : ""}</div>
                   <div className="team-members-list">
