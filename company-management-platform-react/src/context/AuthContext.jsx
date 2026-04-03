@@ -15,21 +15,13 @@ export function AuthProvider({ children }) {
       return { success: false, message: `Access restricted to @${ALLOWED_DOMAIN} employees only` };
     }
 
+    // Admin login
     if (email === "admin@copancs.com" && password === "admin123") {
       setIsLoggedIn(true);
       setUser(USERS.admin);
       return { success: true };
     }
-    if (email === "priya@copancs.com" && password === "manager123") {
-      setIsLoggedIn(true);
-      setUser(USERS.manager);
-      return { success: true };
-    }
-    if (email === "aarav@copancs.com" && password === "emp123") {
-      setIsLoggedIn(true);
-      setUser(USERS.employee);
-      return { success: true };
-    }
+
     return { success: false, message: "Invalid email or password" };
   }
 

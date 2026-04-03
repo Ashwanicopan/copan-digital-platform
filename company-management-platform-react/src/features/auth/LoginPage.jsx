@@ -4,29 +4,16 @@ import copanLogo from "../../assets/images/copan-logo.png";
 
 const ALLOWED_DOMAIN = "copancs.com";
 
-const credentials = {
-  admin: { email: "admin@copancs.com", password: "admin123", label: "HR Admin", icon: "fa-user-shield", desc: "Full system access" },
-  employee: { email: "aarav@copancs.com", password: "emp123", label: "Employee", icon: "fa-user", desc: "Self-service portal" },
-};
-
 export default function LoginPage() {
   const { login } = useAuth();
-  const [role, setRole] = useState("admin");
-  const [email, setEmail] = useState(credentials.admin.email);
-  const [password, setPassword] = useState(credentials.admin.password);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => { setMounted(true); }, []);
-
-  function handleRoleSwitch(newRole) {
-    setRole(newRole);
-    setEmail(credentials[newRole].email);
-    setPassword(credentials[newRole].password);
-    setError("");
-  }
 
   function validateDomain(emailStr) {
     const domain = emailStr.split("@")[1]?.toLowerCase();
@@ -115,17 +102,7 @@ export default function LoginPage() {
         <div className="login-form-wrapper">
           <div className="login-form-header">
             <h2>Welcome back</h2>
-            <p>Only @{ALLOWED_DOMAIN} employees can access this portal.</p>
-          </div>
-
-          <div className="login-role-selector">
-            {Object.entries(credentials).map(([key, cred]) => (
-              <button key={key} className={`login-role-btn ${role === key ? "active" : ""}`} onClick={() => handleRoleSwitch(key)} type="button">
-                <div className="login-role-btn-icon"><i className={`fas ${cred.icon}`} /></div>
-                <span className="login-role-btn-label">{cred.label}</span>
-                <span className="login-role-btn-desc">{cred.desc}</span>
-              </button>
-            ))}
+            <p>Sign in with your @{ALLOWED_DOMAIN} email to continue.</p>
           </div>
 
           {error && (
@@ -140,7 +117,7 @@ export default function LoginPage() {
               <label>Email Address</label>
               <div className="login-input-wrapper">
                 <i className="fas fa-envelope" />
-                <input type="email" value={email} onChange={(e) => { setEmail(e.target.value); setError(""); }} placeholder={`name@${ALLOWED_DOMAIN}`} required />
+                <input type="email" value={email} onChange={(e) => { setEmail(e.target.value); setError(""); }} placeholder={`name@${ALLOWED_DOMAIN}`} required autoFocus />
               </div>
             </div>
             <div className="login-input-group">
@@ -158,7 +135,7 @@ export default function LoginPage() {
               <a href="#" className="login-forgot">Forgot password?</a>
             </div>
             <button type="submit" className={`login-submit-btn ${isLoading ? "loading" : ""}`} disabled={isLoading}>
-              {isLoading ? <span className="login-spinner" /> : (<>Sign In as {credentials[role].label}<i className="fas fa-arrow-right" /></>)}
+              {isLoading ? <span className="login-spinner" /> : (<>Sign In<i className="fas fa-arrow-right" /></>)}
             </button>
           </form>
 
