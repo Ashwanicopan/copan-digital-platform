@@ -63,6 +63,7 @@ button { cursor: pointer; font-family: inherit; }
 /* ===== Sidebar ===== */
 .sidebar { width: var(--sidebar-width); background: var(--gray-900); color: #fff; position: fixed; top: 0; left: 0; bottom: 0; display: flex; flex-direction: column; z-index: 100; }
 .sidebar-brand { display: flex; align-items: center; gap: 12px; padding: 20px 24px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+.sidebar-brand img { filter: brightness(0) invert(1); }
 .sidebar-brand .logo { width: 36px; height: 36px; background: var(--primary); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; }
 .sidebar-brand .brand-name { font-size: 1.1rem; font-weight: 700; }
 .sidebar-brand .brand-sub { font-size: 0.7rem; color: var(--gray-400); }
