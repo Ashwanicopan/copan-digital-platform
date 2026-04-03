@@ -6,11 +6,13 @@ import RolesSettings from "./tabs/RolesSettings";
 import LeavePolicySettings from "./tabs/LeavePolicySettings";
 import NotificationSettings from "./tabs/NotificationSettings";
 import PayrollSettings from "./tabs/PayrollSettings";
+import PenaltyRulesSettings from "./tabs/PenaltyRulesSettings";
 
 const tabs = [
   { id: "company", icon: "fa-building", label: "Company Profile" },
   { id: "roles", icon: "fa-user-shield", label: "Roles & Permissions" },
   { id: "leave-policy", icon: "fa-calendar-alt", label: "Leave Policy" },
+  { id: "penalty-rules", icon: "fa-gavel", label: "Penalty Rules" },
   { id: "notifications", icon: "fa-bell", label: "Notifications" },
   { id: "payroll-settings", icon: "fa-wallet", label: "Payroll Config" },
 ];
@@ -19,6 +21,7 @@ const tabComponents = {
   company: CompanySettings,
   roles: RolesSettings,
   "leave-policy": LeavePolicySettings,
+  "penalty-rules": PenaltyRulesSettings,
   notifications: NotificationSettings,
   "payroll-settings": PayrollSettings,
 };
