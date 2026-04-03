@@ -16,7 +16,11 @@ function ProtectedRoute({ children }) {
 }
 
 export default function AppRoutes() {
-  const { isLoggedIn } = useAuth();
+  const { isLoggedIn, loading } = useAuth();
+
+  if (loading) {
+    return <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", color: "var(--gray-400)" }}><i className="fas fa-spinner fa-spin" style={{ fontSize: "1.5rem" }} /></div>;
+  }
 
   return (
     <Routes>
