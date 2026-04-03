@@ -4,9 +4,9 @@ export const COMPANY = {
   departments: ["Developer", "Designer", "HR"],
   locations: ["Chandigarh"],
   designations: {
-    Developer: ["Senior Developer", "Lead Developer", "Full Stack Developer", "Frontend Developer", "Backend Developer", "Intern Developer"],
     Designer: ["Senior UX Designer", "Lead UX Designer", "UX Designer", "Intern Designer"],
-    HR: ["HR Manager", "HR Executive", "HR Intern"],
+    Developer: ["Senior Developer", "Lead Developer", "Developer", "Intern Developer"],
+    HR: ["Senior HR Manager", "Lead HR Manager", "HR Executive", "Intern HR"],
   },
 };
 
