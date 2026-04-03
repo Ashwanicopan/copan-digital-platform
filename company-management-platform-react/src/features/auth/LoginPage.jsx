@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
-import copanLogo from "../../assets/images/copan-logo.svg";
+import copanLogo from "../../assets/images/copan-logo.png";
 
 const credentials = {
   admin: { email: "admin@copan.com", password: "admin123", label: "HR Admin", icon: "fa-user-shield", desc: "Full system access" },

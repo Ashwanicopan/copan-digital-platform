@@ -4,7 +4,7 @@ import Avatar from "../../components/ui/Avatar";
 import Badge from "../../components/ui/Badge";
 import { useData } from "../../context/DataContext";
 import { formatCurrency, formatDate, numberToWords } from "../../utils/helpers";
-import copanLogo from "../../assets/images/copan-logo.svg";
+import copanLogo from "../../assets/images/copan-logo.png";
 
 export default function PayrollPage() {
   const { payroll: PAYROLL_DATA, employees: EMPLOYEES_DATA } = useData();

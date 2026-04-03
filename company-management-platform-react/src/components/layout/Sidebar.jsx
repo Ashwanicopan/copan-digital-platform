@@ -1,6 +1,7 @@
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useData } from "../../context/DataContext";
+import copanLogo from "../../assets/images/copan-logo.png";
 
 const navItems = [
   { section: "Main", items: [
@@ -24,11 +25,7 @@ export default function Sidebar() {
   return (
     <aside className="sidebar">
       <div className="sidebar-brand">
-        <div className="logo">C</div>
-        <div>
-          <div className="brand-name">Copan</div>
-          <div className="brand-sub">HR Management</div>
-        </div>
+        <img src={copanLogo} alt="Copan" style={{ height: 28, width: "auto" }} />
       </div>
 
       <nav className="sidebar-nav">
