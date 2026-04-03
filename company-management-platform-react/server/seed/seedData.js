@@ -30,24 +30,24 @@ async function seed() {
     departments: ["Engineering", "Design", "Marketing", "Sales", "HR", "Finance", "Operations"],
     locations: ["Mumbai", "Bangalore", "Delhi", "Pune"],
     industry: "Information Technology", size: "51-200", foundedYear: "2018",
-    email: "hr@copan.com", phone: "+91 22 4567 8900",
+    email: "hr@copancs.com", phone: "+91 22 4567 8900",
     address: "Tower B, Cyber City, Sector 24, Mumbai, Maharashtra 400001",
   });
 
   // Employees
   const employeesData = [
-    { employeeId: "CD-1001", name: "Aarav Sharma", email: "aarav.sharma@copan.com", phone: "+91 98765 43210", department: "Engineering", designation: "Senior Developer", location: "Bangalore", joinDate: "2022-03-15", dob: "1995-04-02", salary: 120000, status: "active", avatar: "AS", manager: "Priya Patel" },
-    { employeeId: "CD-1002", name: "Priya Patel", email: "priya.patel@copan.com", phone: "+91 98765 43211", department: "Engineering", designation: "Engineering Manager", location: "Bangalore", joinDate: "2020-01-10", dob: "1990-07-22", salary: 180000, status: "active", avatar: "PP", manager: "Rajesh Kumar" },
-    { employeeId: "CD-1003", name: "Rajesh Kumar", email: "rajesh.kumar@copan.com", phone: "+91 98765 43212", department: "Engineering", designation: "VP Engineering", location: "Mumbai", joinDate: "2019-06-01", dob: "1985-12-10", salary: 250000, status: "active", avatar: "RK", manager: null },
-    { employeeId: "CD-1004", name: "Sneha Reddy", email: "sneha.reddy@copan.com", phone: "+91 98765 43213", department: "Design", designation: "UI/UX Lead", location: "Bangalore", joinDate: "2021-08-20", dob: "1993-04-05", salary: 140000, status: "active", avatar: "SR", manager: "Rajesh Kumar" },
-    { employeeId: "CD-1005", name: "Amit Verma", email: "amit.verma@copan.com", phone: "+91 98765 43214", department: "Marketing", designation: "Marketing Manager", location: "Mumbai", joinDate: "2021-02-14", dob: "1992-09-18", salary: 130000, status: "active", avatar: "AV", manager: "Rajesh Kumar" },
-    { employeeId: "CD-1006", name: "Kavya Nair", email: "kavya.nair@copan.com", phone: "+91 98765 43215", department: "HR", designation: "HR Manager", location: "Mumbai", joinDate: "2020-11-05", dob: "1991-04-03", salary: 110000, status: "active", avatar: "KN", manager: "Rajesh Kumar" },
-    { employeeId: "CD-1007", name: "Vikram Singh", email: "vikram.singh@copan.com", phone: "+91 98765 43216", department: "Sales", designation: "Sales Lead", location: "Delhi", joinDate: "2022-07-18", dob: "1994-01-30", salary: 125000, status: "active", avatar: "VS", manager: "Amit Verma" },
-    { employeeId: "CD-1008", name: "Ananya Gupta", email: "ananya.gupta@copan.com", phone: "+91 98765 43217", department: "Engineering", designation: "Frontend Developer", location: "Bangalore", joinDate: "2023-01-09", dob: "1998-06-14", salary: 90000, status: "active", avatar: "AG", manager: "Priya Patel" },
-    { employeeId: "CD-1009", name: "Rohan Mehta", email: "rohan.mehta@copan.com", phone: "+91 98765 43218", department: "Finance", designation: "Finance Analyst", location: "Mumbai", joinDate: "2022-09-12", dob: "1996-11-25", salary: 95000, status: "active", avatar: "RM", manager: "Rajesh Kumar" },
-    { employeeId: "CD-1010", name: "Deepa Iyer", email: "deepa.iyer@copan.com", phone: "+91 98765 43219", department: "Engineering", designation: "Backend Developer", location: "Pune", joinDate: "2023-04-03", dob: "1997-04-07", salary: 95000, status: "on-leave", avatar: "DI", manager: "Priya Patel" },
-    { employeeId: "CD-1011", name: "Arjun Rao", email: "arjun.rao@copan.com", phone: "+91 98765 43220", department: "Operations", designation: "Ops Manager", location: "Delhi", joinDate: "2021-05-22", dob: "1993-08-09", salary: 115000, status: "active", avatar: "AR", manager: "Rajesh Kumar" },
-    { employeeId: "CD-1012", name: "Meera Joshi", email: "meera.joshi@copan.com", phone: "+91 98765 43221", department: "Design", designation: "Graphic Designer", location: "Pune", joinDate: "2023-06-15", dob: "1999-04-02", salary: 75000, status: "active", avatar: "MJ", manager: "Sneha Reddy" },
+    { employeeId: "CD-1001", name: "Aarav Sharma", email: "aarav.sharma@copancs.com", phone: "+91 98765 43210", department: "Engineering", designation: "Senior Developer", location: "Bangalore", joinDate: "2022-03-15", dob: "1995-04-02", salary: 120000, status: "active", avatar: "AS", manager: "Priya Patel" },
+    { employeeId: "CD-1002", name: "Priya Patel", email: "priya.patel@copancs.com", phone: "+91 98765 43211", department: "Engineering", designation: "Engineering Manager", location: "Bangalore", joinDate: "2020-01-10", dob: "1990-07-22", salary: 180000, status: "active", avatar: "PP", manager: "Rajesh Kumar" },
+    { employeeId: "CD-1003", name: "Rajesh Kumar", email: "rajesh.kumar@copancs.com", phone: "+91 98765 43212", department: "Engineering", designation: "VP Engineering", location: "Mumbai", joinDate: "2019-06-01", dob: "1985-12-10", salary: 250000, status: "active", avatar: "RK", manager: null },
+    { employeeId: "CD-1004", name: "Sneha Reddy", email: "sneha.reddy@copancs.com", phone: "+91 98765 43213", department: "Design", designation: "UI/UX Lead", location: "Bangalore", joinDate: "2021-08-20", dob: "1993-04-05", salary: 140000, status: "active", avatar: "SR", manager: "Rajesh Kumar" },
+    { employeeId: "CD-1005", name: "Amit Verma", email: "amit.verma@copancs.com", phone: "+91 98765 43214", department: "Marketing", designation: "Marketing Manager", location: "Mumbai", joinDate: "2021-02-14", dob: "1992-09-18", salary: 130000, status: "active", avatar: "AV", manager: "Rajesh Kumar" },
+    { employeeId: "CD-1006", name: "Kavya Nair", email: "kavya.nair@copancs.com", phone: "+91 98765 43215", department: "HR", designation: "HR Manager", location: "Mumbai", joinDate: "2020-11-05", dob: "1991-04-03", salary: 110000, status: "active", avatar: "KN", manager: "Rajesh Kumar" },
+    { employeeId: "CD-1007", name: "Vikram Singh", email: "vikram.singh@copancs.com", phone: "+91 98765 43216", department: "Sales", designation: "Sales Lead", location: "Delhi", joinDate: "2022-07-18", dob: "1994-01-30", salary: 125000, status: "active", avatar: "VS", manager: "Amit Verma" },
+    { employeeId: "CD-1008", name: "Ananya Gupta", email: "ananya.gupta@copancs.com", phone: "+91 98765 43217", department: "Engineering", designation: "Frontend Developer", location: "Bangalore", joinDate: "2023-01-09", dob: "1998-06-14", salary: 90000, status: "active", avatar: "AG", manager: "Priya Patel" },
+    { employeeId: "CD-1009", name: "Rohan Mehta", email: "rohan.mehta@copancs.com", phone: "+91 98765 43218", department: "Finance", designation: "Finance Analyst", location: "Mumbai", joinDate: "2022-09-12", dob: "1996-11-25", salary: 95000, status: "active", avatar: "RM", manager: "Rajesh Kumar" },
+    { employeeId: "CD-1010", name: "Deepa Iyer", email: "deepa.iyer@copancs.com", phone: "+91 98765 43219", department: "Engineering", designation: "Backend Developer", location: "Pune", joinDate: "2023-04-03", dob: "1997-04-07", salary: 95000, status: "on-leave", avatar: "DI", manager: "Priya Patel" },
+    { employeeId: "CD-1011", name: "Arjun Rao", email: "arjun.rao@copancs.com", phone: "+91 98765 43220", department: "Operations", designation: "Ops Manager", location: "Delhi", joinDate: "2021-05-22", dob: "1993-08-09", salary: 115000, status: "active", avatar: "AR", manager: "Rajesh Kumar" },
+    { employeeId: "CD-1012", name: "Meera Joshi", email: "meera.joshi@copancs.com", phone: "+91 98765 43221", department: "Design", designation: "Graphic Designer", location: "Pune", joinDate: "2023-06-15", dob: "1999-04-02", salary: 75000, status: "active", avatar: "MJ", manager: "Sneha Reddy" },
   ];
 
   const employees = await Employee.insertMany(employeesData);
@@ -56,9 +56,9 @@ async function seed() {
   console.log(`Seeded ${employees.length} employees`);
 
   // Users (login accounts)
-  const adminUser = await User.create({ name: "Kavya Nair", email: "admin@copan.com", password: "admin123", role: "admin", avatar: "KN", employeeRef: empMap["CD-1006"]._id });
-  const managerUser = await User.create({ name: "Priya Patel", email: "priya@copan.com", password: "manager123", role: "manager", avatar: "PP", employeeRef: empMap["CD-1002"]._id });
-  const employeeUser = await User.create({ name: "Aarav Sharma", email: "aarav@copan.com", password: "emp123", role: "employee", avatar: "AS", employeeRef: empMap["CD-1001"]._id });
+  const adminUser = await User.create({ name: "Kavya Nair", email: "admin@copancs.com", password: "admin123", role: "admin", avatar: "KN", employeeRef: empMap["CD-1006"]._id });
+  const managerUser = await User.create({ name: "Priya Patel", email: "priya@copancs.com", password: "manager123", role: "manager", avatar: "PP", employeeRef: empMap["CD-1002"]._id });
+  const employeeUser = await User.create({ name: "Aarav Sharma", email: "aarav@copancs.com", password: "emp123", role: "employee", avatar: "AS", employeeRef: empMap["CD-1001"]._id });
   console.log("Seeded 3 users");
 
   // Link users to employees
@@ -302,9 +302,9 @@ async function seed() {
 
   console.log("\nSeed completed successfully!");
   console.log("\nLogin credentials:");
-  console.log("  HR Admin:  admin@copan.com / admin123");
-  console.log("  Manager:   priya@copan.com / manager123");
-  console.log("  Employee:  aarav@copan.com / emp123");
+  console.log("  HR Admin:  admin@copancs.com / admin123");
+  console.log("  Manager:   priya@copancs.com / manager123");
+  console.log("  Employee:  aarav@copancs.com / emp123");
 
   process.exit(0);
 }

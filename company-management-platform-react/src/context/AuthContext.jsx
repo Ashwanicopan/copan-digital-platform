@@ -2,23 +2,30 @@ import { createContext, useContext, useState } from "react";
 import { USERS, TEAMS_DATA } from "../data/mockData";
 
 const AuthContext = createContext(null);
+const ALLOWED_DOMAIN = "copancs.com";
 
 export function AuthProvider({ children }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState(null);
 
   function login(email, password) {
-    if (email === "admin@copan.com" && password === "admin123") {
+    // Validate domain
+    const domain = email.split("@")[1]?.toLowerCase();
+    if (domain !== ALLOWED_DOMAIN) {
+      return { success: false, message: `Access restricted to @${ALLOWED_DOMAIN} employees only` };
+    }
+
+    if (email === "admin@copancs.com" && password === "admin123") {
       setIsLoggedIn(true);
       setUser(USERS.admin);
       return { success: true };
     }
-    if (email === "priya@copan.com" && password === "manager123") {
+    if (email === "priya@copancs.com" && password === "manager123") {
       setIsLoggedIn(true);
       setUser(USERS.manager);
       return { success: true };
     }
-    if (email === "aarav@copan.com" && password === "emp123") {
+    if (email === "aarav@copancs.com" && password === "emp123") {
       setIsLoggedIn(true);
       setUser(USERS.employee);
       return { success: true };
