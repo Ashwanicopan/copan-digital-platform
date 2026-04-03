@@ -1313,6 +1313,7 @@ tbody tr:hover { background: var(--gray-50); }
 .mb-4 { margin-bottom: 16px; }
 .flex { display: flex; }
 .items-center { align-items: center; }
+.gap-1 { gap: 6px; }
 .gap-2 { gap: 8px; }
 .gap-3 { gap: 12px; }
 .gap-4 { gap: 16px; }
