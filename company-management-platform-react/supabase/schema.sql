@@ -235,7 +235,7 @@ CREATE TABLE notifications (
 -- 14. COMPANY SETTINGS (single-row config table)
 CREATE TABLE company_settings (
   id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  name TEXT DEFAULT 'Copan Digital',
+  name TEXT DEFAULT 'Copan',
   industry TEXT DEFAULT 'Technology',
   company_size TEXT DEFAULT '50-100',
   founded_year INT DEFAULT 2019,
@@ -250,7 +250,7 @@ CREATE TABLE company_settings (
 );
 
 INSERT INTO company_settings (name, email, phone, address) VALUES
-  ('Copan Digital', 'hr@copandigital.com', '+91 98765 00000', 'Flat Number 5, 3rd Floor, Hibiscus Park, Sector 25, Panchkula, Haryana 134116');
+  ('Copan', 'hr@copan.com', '+91 98765 00000', 'Flat Number 5, 3rd Floor, Hibiscus Park, Sector 25, Panchkula, Haryana 134116');
 
 -- 15. NOTIFICATION PREFERENCES
 CREATE TABLE notification_preferences (
@@ -407,18 +407,18 @@ CREATE TRIGGER company_settings_updated_at BEFORE UPDATE ON company_settings FOR
 -- NOTE: Run this AFTER creating auth users, or without auth_user_id for now
 
 INSERT INTO employees (employee_id, name, email, phone, department_id, designation, location_id, join_date, dob, salary, status, avatar, role_id, payment_mode, bank_name, bank_account, pan, uan) VALUES
-  ('CD-1001', 'Aarav Sharma', 'aarav.sharma@copandigital.com', '+91 98765 43210', 1, 'Senior Developer', 2, '2022-03-15', '1995-04-02', 120000, 'active', 'AS', 4, 'Bank Transfer', 'HDFC Bank', '50100234567890', 'ABCPS1234K', '100872318891'),
-  ('CD-1002', 'Priya Patel', 'priya.patel@copandigital.com', '+91 98765 43211', 1, 'Engineering Manager', 2, '2020-01-10', '1990-07-22', 180000, 'active', 'PP', 3, 'Bank Transfer', 'ICICI Bank', '60210345678901', 'BXYPP2345L', '100872318892'),
-  ('CD-1003', 'Rajesh Kumar', 'rajesh.kumar@copandigital.com', '+91 98765 43212', 1, 'VP Engineering', 1, '2019-06-01', '1985-12-10', 250000, 'active', 'RK', 1, 'Bank Transfer', 'SBI', '38210456789012', 'CKLRK3456M', '100872318893'),
-  ('CD-1004', 'Sneha Reddy', 'sneha.reddy@copandigital.com', '+91 98765 43213', 2, 'UI/UX Lead', 2, '2021-08-20', '1993-04-05', 140000, 'active', 'SR', 3, 'Bank Transfer', 'Axis Bank', '91720567890123', 'DMPSR4567N', '100872318894'),
-  ('CD-1005', 'Amit Verma', 'amit.verma@copandigital.com', '+91 98765 43214', 3, 'Marketing Manager', 1, '2021-02-14', '1992-09-18', 130000, 'active', 'AV', 3, 'Bank Transfer', 'Kotak Mahindra Bank', '41530678901234', 'EQRAV5678P', '100872318895'),
-  ('CD-1006', 'Kavya Nair', 'kavya.nair@copandigital.com', '+91 98765 43215', 5, 'HR Manager', 1, '2020-11-05', '1991-04-03', 110000, 'active', 'KN', 2, 'Bank Transfer', 'IndusInd Bank', '20140789012345', 'FNBKN6789Q', '100872318896'),
-  ('CD-1007', 'Vikram Singh', 'vikram.singh@copandigital.com', '+91 98765 43216', 4, 'Sales Lead', 3, '2022-07-18', '1994-01-30', 125000, 'active', 'VS', 4, 'Bank Transfer', 'Punjab National Bank', '32450890123456', 'GPSVS7890R', '100872318897'),
-  ('CD-1008', 'Ananya Gupta', 'ananya.gupta@copandigital.com', '+91 98765 43217', 1, 'Frontend Developer', 2, '2023-01-09', '1998-06-14', 90000, 'active', 'AG', 4, 'Bank Transfer', 'HDFC Bank', '50100901234567', 'HQTAG8901S', '100872318898'),
-  ('CD-1009', 'Rohan Mehta', 'rohan.mehta@copandigital.com', '+91 98765 43218', 6, 'Finance Analyst', 1, '2022-09-12', '1996-11-25', 95000, 'active', 'RM', 4, 'Bank Transfer', 'ICICI Bank', '60211012345678', 'IRWRM9012T', '100872318899'),
-  ('CD-1010', 'Deepa Iyer', 'deepa.iyer@copandigital.com', '+91 98765 43219', 1, 'Backend Developer', 4, '2023-04-03', '1997-04-07', 95000, 'on-leave', 'DI', 4, 'Bank Transfer', 'SBI', '38211123456789', 'JSXDI0123U', '100872318900'),
-  ('CD-1011', 'Arjun Rao', 'arjun.rao@copandigital.com', '+91 98765 43220', 7, 'Ops Manager', 3, '2021-05-22', '1993-08-09', 115000, 'active', 'AR', 3, 'Bank Transfer', 'Axis Bank', '91721234567890', 'KTYAR1234V', '100872318901'),
-  ('CD-1012', 'Meera Joshi', 'meera.joshi@copandigital.com', '+91 98765 43221', 2, 'Graphic Designer', 4, '2023-06-15', '1999-04-02', 75000, 'active', 'MJ', 4, 'Bank Transfer', 'Kotak Mahindra Bank', '41531345678901', 'LWZMJ2345W', '100872318902');
+  ('CD-1001', 'Aarav Sharma', 'aarav.sharma@copan.com', '+91 98765 43210', 1, 'Senior Developer', 2, '2022-03-15', '1995-04-02', 120000, 'active', 'AS', 4, 'Bank Transfer', 'HDFC Bank', '50100234567890', 'ABCPS1234K', '100872318891'),
+  ('CD-1002', 'Priya Patel', 'priya.patel@copan.com', '+91 98765 43211', 1, 'Engineering Manager', 2, '2020-01-10', '1990-07-22', 180000, 'active', 'PP', 3, 'Bank Transfer', 'ICICI Bank', '60210345678901', 'BXYPP2345L', '100872318892'),
+  ('CD-1003', 'Rajesh Kumar', 'rajesh.kumar@copan.com', '+91 98765 43212', 1, 'VP Engineering', 1, '2019-06-01', '1985-12-10', 250000, 'active', 'RK', 1, 'Bank Transfer', 'SBI', '38210456789012', 'CKLRK3456M', '100872318893'),
+  ('CD-1004', 'Sneha Reddy', 'sneha.reddy@copan.com', '+91 98765 43213', 2, 'UI/UX Lead', 2, '2021-08-20', '1993-04-05', 140000, 'active', 'SR', 3, 'Bank Transfer', 'Axis Bank', '91720567890123', 'DMPSR4567N', '100872318894'),
+  ('CD-1005', 'Amit Verma', 'amit.verma@copan.com', '+91 98765 43214', 3, 'Marketing Manager', 1, '2021-02-14', '1992-09-18', 130000, 'active', 'AV', 3, 'Bank Transfer', 'Kotak Mahindra Bank', '41530678901234', 'EQRAV5678P', '100872318895'),
+  ('CD-1006', 'Kavya Nair', 'kavya.nair@copan.com', '+91 98765 43215', 5, 'HR Manager', 1, '2020-11-05', '1991-04-03', 110000, 'active', 'KN', 2, 'Bank Transfer', 'IndusInd Bank', '20140789012345', 'FNBKN6789Q', '100872318896'),
+  ('CD-1007', 'Vikram Singh', 'vikram.singh@copan.com', '+91 98765 43216', 4, 'Sales Lead', 3, '2022-07-18', '1994-01-30', 125000, 'active', 'VS', 4, 'Bank Transfer', 'Punjab National Bank', '32450890123456', 'GPSVS7890R', '100872318897'),
+  ('CD-1008', 'Ananya Gupta', 'ananya.gupta@copan.com', '+91 98765 43217', 1, 'Frontend Developer', 2, '2023-01-09', '1998-06-14', 90000, 'active', 'AG', 4, 'Bank Transfer', 'HDFC Bank', '50100901234567', 'HQTAG8901S', '100872318898'),
+  ('CD-1009', 'Rohan Mehta', 'rohan.mehta@copan.com', '+91 98765 43218', 6, 'Finance Analyst', 1, '2022-09-12', '1996-11-25', 95000, 'active', 'RM', 4, 'Bank Transfer', 'ICICI Bank', '60211012345678', 'IRWRM9012T', '100872318899'),
+  ('CD-1010', 'Deepa Iyer', 'deepa.iyer@copan.com', '+91 98765 43219', 1, 'Backend Developer', 4, '2023-04-03', '1997-04-07', 95000, 'on-leave', 'DI', 4, 'Bank Transfer', 'SBI', '38211123456789', 'JSXDI0123U', '100872318900'),
+  ('CD-1011', 'Arjun Rao', 'arjun.rao@copan.com', '+91 98765 43220', 7, 'Ops Manager', 3, '2021-05-22', '1993-08-09', 115000, 'active', 'AR', 3, 'Bank Transfer', 'Axis Bank', '91721234567890', 'KTYAR1234V', '100872318901'),
+  ('CD-1012', 'Meera Joshi', 'meera.joshi@copan.com', '+91 98765 43221', 2, 'Graphic Designer', 4, '2023-06-15', '1999-04-02', 75000, 'active', 'MJ', 4, 'Bank Transfer', 'Kotak Mahindra Bank', '41531345678901', 'LWZMJ2345W', '100872318902');
 
 -- Set manager relationships
 UPDATE employees SET manager_id = (SELECT id FROM employees WHERE employee_id = 'CD-1002') WHERE employee_id = 'CD-1001';

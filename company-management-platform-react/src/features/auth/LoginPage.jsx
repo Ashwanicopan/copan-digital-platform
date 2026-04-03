@@ -3,8 +3,8 @@ import { useAuth } from "../../context/AuthContext";
 import copanLogo from "../../assets/images/copan-logo.svg";
 
 const credentials = {
-  admin: { email: "admin@copandigital.com", password: "admin123", label: "HR Admin", icon: "fa-user-shield", desc: "Full system access" },
-  employee: { email: "aarav@copandigital.com", password: "emp123", label: "Employee", icon: "fa-user", desc: "Self-service portal" },
+  admin: { email: "admin@copan.com", password: "admin123", label: "HR Admin", icon: "fa-user-shield", desc: "Full system access" },
+  employee: { email: "aarav@copan.com", password: "emp123", label: "Employee", icon: "fa-user", desc: "Self-service portal" },
 };
 
 export default function LoginPage() {
@@ -47,7 +47,7 @@ export default function LoginPage() {
 
         <div className="login-brand-content">
           <div className="login-brand-logo">
-            <img src={copanLogo} alt="Copan Digital" className="login-brand-logo-img" />
+            <img src={copanLogo} alt="Copan" className="login-brand-logo-img" />
           </div>
 
           <h2 className="lp-headline">Everything HR,<br />Simplified.</h2>

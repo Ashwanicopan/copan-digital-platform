@@ -8,17 +8,17 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
 
   function login(email, password) {
-    if (email === "admin@copandigital.com" && password === "admin123") {
+    if (email === "admin@copan.com" && password === "admin123") {
       setIsLoggedIn(true);
       setUser(USERS.admin);
       return { success: true };
     }
-    if (email === "priya@copandigital.com" && password === "manager123") {
+    if (email === "priya@copan.com" && password === "manager123") {
       setIsLoggedIn(true);
       setUser(USERS.manager);
       return { success: true };
     }
-    if (email === "aarav@copandigital.com" && password === "emp123") {
+    if (email === "aarav@copan.com" && password === "emp123") {
       setIsLoggedIn(true);
       setUser(USERS.employee);
       return { success: true };

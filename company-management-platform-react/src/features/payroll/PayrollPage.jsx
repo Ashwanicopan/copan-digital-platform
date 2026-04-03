@@ -159,7 +159,7 @@ function PayslipDetail({ data, onClose }) {
       <div className="payslip-doc-header">
         <div>
           <h1 className="payslip-doc-title">PAYSLIP <span>{data.month.toUpperCase()}</span></h1>
-          <p className="payslip-doc-company">COPAN CONSULTANCY SERVICES PRIVATE LIMITED</p>
+          <p className="payslip-doc-company">COPAN SERVICES PRIVATE LIMITED</p>
           <p className="payslip-doc-address">FLAT NUMBER 5, 3RD FLOOR, HIBISCUS PARK</p>
           <p className="payslip-doc-address">SECTOR 25</p>
           <p className="payslip-doc-address">Panchkula, Haryana 134116</p>

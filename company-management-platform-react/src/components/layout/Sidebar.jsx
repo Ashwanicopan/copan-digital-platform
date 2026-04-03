@@ -24,9 +24,9 @@ export default function Sidebar() {
   return (
     <aside className="sidebar">
       <div className="sidebar-brand">
-        <div className="logo">CD</div>
+        <div className="logo">C</div>
         <div>
-          <div className="brand-name">Copan Digital</div>
+          <div className="brand-name">Copan</div>
           <div className="brand-sub">HR Management</div>
         </div>
       </div>

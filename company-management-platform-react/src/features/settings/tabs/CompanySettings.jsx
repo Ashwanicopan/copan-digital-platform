@@ -25,7 +25,7 @@ export default function CompanySettings() {
           </select>
         </div>
         <div className="form-group"><label>Founded Year</label><input type="text" defaultValue="2018" /></div>
-        <div className="form-group"><label>Contact Email</label><input type="email" defaultValue="hr@copandigital.com" /></div>
+        <div className="form-group"><label>Contact Email</label><input type="email" defaultValue="hr@copan.com" /></div>
         <div className="form-group"><label>Phone</label><input type="text" defaultValue="+91 22 4567 8900" /></div>
       </div>
       <div className="form-group" style={{ marginTop: 8 }}>
