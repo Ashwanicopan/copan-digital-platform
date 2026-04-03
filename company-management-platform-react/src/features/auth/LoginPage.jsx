@@ -20,17 +20,15 @@ export default function LoginPage() {
     return domain === ALLOWED_DOMAIN;
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
     if (!validateDomain(email)) {
       setError(`Access restricted to @${ALLOWED_DOMAIN} employees only`);
       return;
     }
     setIsLoading(true);
-    setTimeout(() => {
-      const result = login(email, password);
-      if (!result.success) { setError(result.message); setIsLoading(false); }
-    }, 600);
+    const result = await login(email, password);
+    if (!result.success) { setError(result.message); setIsLoading(false); }
   }
 
   return (

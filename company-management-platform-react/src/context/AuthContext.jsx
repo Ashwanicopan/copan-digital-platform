@@ -1,5 +1,5 @@
 import { createContext, useContext, useState } from "react";
-import { USERS, TEAMS_DATA } from "../data/mockData";
+import { supabase } from "../lib/supabase";
 
 const AuthContext = createContext(null);
 const ALLOWED_DOMAIN = "copancs.com";
@@ -8,21 +8,44 @@ export function AuthProvider({ children }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState(null);
 
-  function login(email, password) {
+  async function login(email, password) {
     // Validate domain
     const domain = email.split("@")[1]?.toLowerCase();
     if (domain !== ALLOWED_DOMAIN) {
       return { success: false, message: `Access restricted to @${ALLOWED_DOMAIN} employees only` };
     }
 
-    // Admin login
-    if (email === "admin@copancs.com" && password === "admin123") {
-      setIsLoggedIn(true);
-      setUser(USERS.admin);
-      return { success: true };
-    }
+    try {
+      // Check against Supabase employees table
+      const { data, error } = await supabase
+        .from("employees")
+        .select("*, department:departments(name), role:roles(name)")
+        .eq("email", email.toLowerCase())
+        .eq("password", password)
+        .single();
 
-    return { success: false, message: "Invalid email or password" };
+      if (error || !data) {
+        return { success: false, message: "Invalid email or password" };
+      }
+
+      const initials = data.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
+
+      setIsLoggedIn(true);
+      setUser({
+        id: data.id,
+        name: data.name,
+        email: data.email,
+        role: data.is_admin ? "HR Admin" : data.is_manager ? "Manager" : "Employee",
+        avatar: data.avatar || initials,
+        isAdmin: data.is_admin || false,
+        isManager: data.is_manager || false,
+        department: data.department?.name || "",
+        designation: data.designation || "",
+      });
+      return { success: true };
+    } catch {
+      return { success: false, message: "Invalid email or password" };
+    }
   }
 
   function logout() {
@@ -30,19 +53,15 @@ export function AuthProvider({ children }) {
     setUser(null);
   }
 
-  function getTeamMemberIds() {
-    if (!user) return [];
-    const teams = TEAMS_DATA.filter((t) => t.managerId === user.id);
-    const ids = new Set();
-    teams.forEach((t) => t.memberIds.forEach((id) => ids.add(id)));
-    return [...ids];
-  }
-
   function canApproveLeave(employeeId) {
     if (!user) return false;
     if (user.isAdmin) return true;
-    if (user.isManager) return getTeamMemberIds().includes(employeeId);
+    if (user.isManager) return true;
     return false;
+  }
+
+  function getTeamMemberIds() {
+    return [];
   }
 
   return (

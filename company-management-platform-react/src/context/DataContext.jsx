@@ -266,17 +266,30 @@ export function DataProvider({ children }) {
   // CRUD helpers that work with Supabase or fallback to local state
   async function addEmployee(empData) {
     if (usingSupabase) {
+      // Look up department ID by name
+      let deptId = empData.departmentId;
+      if (!deptId && empData.department) {
+        const { data: deptRow } = await supabase.from("departments").select("id").eq("name", empData.department).single();
+        deptId = deptRow?.id;
+      }
+      // Look up location ID by name
+      let locId = empData.locationId;
+      if (!locId && empData.location) {
+        const { data: locRow } = await supabase.from("locations").select("id").eq("name", empData.location).single();
+        locId = locRow?.id;
+      }
       const { data, error } = await supabase.from("employees").insert({
         employee_id: empData.employeeId,
         name: empData.name,
         email: empData.email,
-        department_id: empData.departmentId,
+        department_id: deptId,
         designation: empData.designation,
-        location_id: empData.locationId,
+        location_id: locId,
         join_date: empData.joinDate || new Date().toISOString().split("T")[0],
         status: "active",
         avatar: empData.avatar,
         role_id: empData.roleId || 4,
+        password: empData.password || "copan123",
       }).select(`*, department:departments(id, name), location:locations(id, name), role:roles(id, name, color), manager:employees!manager_id(id, name, employee_id)`).single();
       if (error) throw error;
       const emp = transformEmployee(data);

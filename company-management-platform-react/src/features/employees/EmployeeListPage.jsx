@@ -14,7 +14,7 @@ export default function EmployeeListPage() {
   const [deptFilter, setDeptFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [showModal, setShowModal] = useState(false);
-  const [form, setForm] = useState({ name: "", email: "", department: departments[0] || "", designation: "", location: locations[0] || "" });
+  const [form, setForm] = useState({ name: "", email: "", department: departments[0] || "", designation: "", location: locations[0] || "", password: "copan123" });
 
   const designations = COMPANY.designations || {};
   const currentDesignations = designations[form.department] || [];
@@ -49,13 +49,13 @@ export default function EmployeeListPage() {
       employeeId: "CD-" + (1000 + employees.length + 1),
     });
     setShowModal(false);
-    setForm({ name: "", email: "", department: departments[0] || "", designation: "", location: locations[0] || "" });
+    setForm({ name: "", email: "", department: departments[0] || "", designation: "", location: locations[0] || "", password: "copan123" });
   }
 
   function openAddModal() {
     const dept = departments[0] || "";
     const deptDesignations = designations[dept] || [];
-    setForm({ name: "", email: "", department: dept, designation: deptDesignations[0] || "", location: locations[0] || "" });
+    setForm({ name: "", email: "", department: dept, designation: deptDesignations[0] || "", location: locations[0] || "", password: "copan123" });
     setShowModal(true);
   }
 
@@ -150,6 +150,11 @@ export default function EmployeeListPage() {
             <select value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })}>
               {locations.map((l) => <option key={l} value={l}>{l}</option>)}
             </select>
+          </div>
+          <div className="form-group">
+            <label>Login Password</label>
+            <input type="text" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="Set login password" required />
+            <span style={{ fontSize: "0.72rem", color: "var(--gray-400)", marginTop: 4, display: "block" }}>Employee will use this password to log in to the portal</span>
           </div>
           <div className="form-actions">
             <button type="button" className="btn btn-outline" onClick={() => setShowModal(false)}>Cancel</button>
