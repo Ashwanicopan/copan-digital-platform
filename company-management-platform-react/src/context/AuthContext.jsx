@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { supabase } from "../lib/supabase";
 
 const AuthContext = createContext(null);
@@ -9,43 +9,12 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Check for existing session on mount (for Google SSO redirect)
-  useEffect(() => {
-    async function checkSession() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        const matched = await matchEmployee(session.user.email);
-        if (matched) {
-          setIsLoggedIn(true);
-          setUser(matched);
-        }
-      }
-      setLoading(false);
-    }
-    checkSession();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === "SIGNED_IN" && session?.user) {
-        const matched = await matchEmployee(session.user.email);
-        if (matched) {
-          setIsLoggedIn(true);
-          setUser(matched);
-        }
-      }
-      if (event === "SIGNED_OUT") {
-        setIsLoggedIn(false);
-        setUser(null);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  async function matchEmployee(email) {
+  const matchEmployee = useCallback(async (email) => {
+    if (!email) return null;
     const { data, error } = await supabase
       .from("employees")
       .select("*, department:departments(name), role:roles(name)")
-      .eq("email", email.toLowerCase())
+      .ilike("email", email)
       .single();
 
     if (error || !data) return null;
@@ -62,7 +31,55 @@ export function AuthProvider({ children }) {
       department: data.department?.name || "",
       designation: data.designation || "",
     };
-  }
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function init() {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user?.email && mounted) {
+          const matched = await matchEmployee(session.user.email);
+          if (matched && mounted) {
+            setIsLoggedIn(true);
+            setUser(matched);
+          }
+        }
+      } catch (e) {
+        console.warn("Session check failed:", e);
+      }
+      if (mounted) setLoading(false);
+    }
+
+    init();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!mounted) return;
+
+      if ((event === "SIGNED_IN" || event === "TOKEN_REFRESHED" || event === "INITIAL_SESSION") && session?.user?.email) {
+        const matched = await matchEmployee(session.user.email);
+        if (matched && mounted) {
+          setIsLoggedIn(true);
+          setUser(matched);
+          setLoading(false);
+        } else if (mounted) {
+          // User authenticated with Google but not in employees table
+          setLoading(false);
+        }
+      }
+
+      if (event === "SIGNED_OUT" && mounted) {
+        setIsLoggedIn(false);
+        setUser(null);
+      }
+    });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, [matchEmployee]);
 
   // Google SSO login
   async function loginWithGoogle() {
@@ -77,7 +94,7 @@ export function AuthProvider({ children }) {
     return { success: true };
   }
 
-  // Fallback email/password login (checks against employees table)
+  // Fallback email/password login
   async function login(email, password) {
     const domain = email.split("@")[1]?.toLowerCase();
     if (domain !== ALLOWED_DOMAIN) {
@@ -89,11 +106,10 @@ export function AuthProvider({ children }) {
       return { success: false, message: "You are not registered as an employee. Contact your admin." };
     }
 
-    // Check password from employees table
     const { data } = await supabase
       .from("employees")
       .select("password")
-      .eq("email", email.toLowerCase())
+      .ilike("email", email)
       .single();
 
     if (data?.password && data.password === password) {
