@@ -319,7 +319,7 @@ export function DataProvider({ children }) {
 
       setUsingSupabase(true);
     } catch (err) {
-      console.warn("Supabase fetch failed, using mock data:", err.message);
+      console.error("Supabase fetch failed, using mock data:", err.message, err);
     } finally {
       setLoading(false);
     }
