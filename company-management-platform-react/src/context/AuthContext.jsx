@@ -36,6 +36,11 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     let mounted = true;
 
+    // Timeout safety — never stay loading forever
+    const timeout = setTimeout(() => {
+      if (mounted) setLoading(false);
+    }, 3000);
+
     async function init() {
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -57,16 +62,13 @@ export function AuthProvider({ children }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return;
 
-      if ((event === "SIGNED_IN" || event === "TOKEN_REFRESHED" || event === "INITIAL_SESSION") && session?.user?.email) {
+      if ((event === "SIGNED_IN" || event === "TOKEN_REFRESHED") && session?.user?.email) {
         const matched = await matchEmployee(session.user.email);
         if (matched && mounted) {
           setIsLoggedIn(true);
           setUser(matched);
-          setLoading(false);
-        } else if (mounted) {
-          // User authenticated with Google but not in employees table
-          setLoading(false);
         }
+        if (mounted) setLoading(false);
       }
 
       if (event === "SIGNED_OUT" && mounted) {
@@ -77,6 +79,7 @@ export function AuthProvider({ children }) {
 
     return () => {
       mounted = false;
+      clearTimeout(timeout);
       subscription.unsubscribe();
     };
   }, [matchEmployee]);
