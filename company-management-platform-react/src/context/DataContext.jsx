@@ -178,24 +178,59 @@ export function DataProvider({ children }) {
     }
 
     try {
-      // Fetch employees
+      // Fetch departments and locations first (for lookups)
+      const { data: deptData } = await supabase.from("departments").select("*").order("name");
+      const deptMap = {};
+      if (deptData) {
+        setDepartments(deptData.map((d) => d.name));
+        deptData.forEach((d) => { deptMap[d.id] = d.name; });
+      }
+
+      const { data: locData } = await supabase.from("locations").select("*").order("name");
+      const locMap = {};
+      if (locData) {
+        setLocations(locData.map((l) => l.name));
+        locData.forEach((l) => { locMap[l.id] = l.name; });
+      }
+
+      // Fetch employees (simple select, no joins)
       const { data: empData, error: empErr } = await supabase
         .from("employees")
-        .select(`*, department:departments(id, name), location:locations(id, name), role:roles(id, name, color), manager:employees!manager_id(id, name, employee_id)`)
+        .select("*")
         .order("name");
 
       if (empErr) throw empErr;
 
-      const transformedEmps = empData.map(transformEmployee);
+      // Transform with lookups
+      const transformedEmps = empData.map((row) => ({
+        id: row.id,
+        name: row.name,
+        email: row.email,
+        phone: row.phone,
+        department: deptMap[row.department_id] || "",
+        departmentId: row.department_id,
+        designation: row.designation,
+        location: locMap[row.location_id] || "",
+        locationId: row.location_id,
+        joinDate: row.join_date,
+        dob: row.dob,
+        salary: Number(row.salary),
+        status: row.status,
+        avatar: row.avatar,
+        avatarUrl: row.avatar_url || null,
+        manager: null,
+        managerId: row.manager_id,
+        employeeId: row.employee_id,
+        roleId: row.role_id,
+        paymentMode: row.payment_mode,
+        bankName: row.bank_name,
+        bankAccount: row.bank_account,
+        pan: row.pan,
+        uan: row.uan,
+        isAdmin: row.is_admin || false,
+        isManager: row.is_manager || false,
+      }));
       setEmployees(transformedEmps);
-
-      // Fetch departments
-      const { data: deptData } = await supabase.from("departments").select("*").order("name");
-      if (deptData) setDepartments(deptData.map((d) => d.name));
-
-      // Fetch locations
-      const { data: locData } = await supabase.from("locations").select("*").order("name");
-      if (locData) setLocations(locData.map((l) => l.name));
 
       // Fetch attendance
       const { data: attData } = await supabase.from("attendance").select("*").order("date", { ascending: false });
@@ -204,33 +239,63 @@ export function DataProvider({ children }) {
       // Fetch leave requests
       const { data: leaveData } = await supabase
         .from("leave_requests")
-        .select(`*, employee:employees(id, name, employee_id, avatar), leave_type:leave_policies(id, type)`)
+        .select("*")
         .order("applied_on", { ascending: false });
-      if (leaveData) setLeaveRequests(leaveData.map(transformLeaveRequest));
+      if (leaveData) {
+        // Fetch leave policy names
+        const { data: policyData } = await supabase.from("leave_policies").select("id, type");
+        const policyMap = {};
+        if (policyData) policyData.forEach((p) => { policyMap[p.id] = p.type; });
+
+        setLeaveRequests(leaveData.map((row) => {
+          const emp = transformedEmps.find((e) => e.id === row.employee_id);
+          return {
+            id: row.id, employeeId: row.employee_id,
+            employeeName: emp?.name || "", type: policyMap[row.leave_policy_id] || "",
+            from: row.from_date, to: row.to_date, days: Number(row.days),
+            reason: row.reason, status: row.status,
+            appliedOn: row.applied_on?.split("T")[0] || "",
+          };
+        }));
+      }
 
       // Fetch leave balances
       const { data: balData } = await supabase
         .from("leave_balances")
-        .select(`*, leave_type:leave_policies(id, type)`)
+        .select("*")
         .eq("year", new Date().getFullYear());
-      if (balData) setLeaveBalances(balData.map(transformLeaveBalance));
+      if (balData) {
+        const { data: policyData2 } = await supabase.from("leave_policies").select("id, type");
+        const policyMap2 = {};
+        if (policyData2) policyData2.forEach((p) => { policyMap2[p.id] = p.type; });
+
+        setLeaveBalances(balData.map((row) => ({
+          employeeId: row.employee_id, leavePolicyId: row.leave_policy_id,
+          type: policyMap2[row.leave_policy_id] || "", balance: Number(row.balance),
+          used: Number(row.used), year: row.year,
+        })));
+      }
 
       // Fetch payroll
       const { data: payData } = await supabase
         .from("payroll")
-        .select(`*, employee:employees(id, name, employee_id, avatar, designation, department:departments(name), bank_name, bank_account, pan, uan, payment_mode, location:locations(name), join_date)`)
+        .select("*")
         .order("employee_id");
-      if (payData) setPayroll(payData.map(transformPayroll));
+      if (payData) setPayroll(payData.map((row) => {
+        const emp = transformedEmps.find((e) => e.id === row.employee_id);
+        return { ...transformPayroll(row), emp: emp || null };
+      }));
 
       // Fetch announcements
       const { data: annData } = await supabase
         .from("announcements")
-        .select(`*, author_name:employees!author_id(name)`)
+        .select("*")
         .order("date", { ascending: false });
       if (annData) {
         setAnnouncements(annData.map((a) => ({
-          ...transformAnnouncement(a),
-          author: a.author_name?.name || "Admin",
+          id: a.id, title: a.title, message: a.message,
+          category: a.category, date: a.date,
+          author: transformedEmps.find((e) => e.id === a.author_id)?.name || "Admin",
         })));
       }
 
