@@ -18,7 +18,10 @@ function ProtectedRoute({ children }) {
 export default function AppRoutes() {
   const { isLoggedIn, loading } = useAuth();
 
-  if (loading) {
+  // Don't redirect while auth is loading OR while URL has OAuth tokens
+  const hasAuthTokens = window.location.hash.includes("access_token") || window.location.search.includes("code=");
+
+  if (loading || hasAuthTokens) {
     return <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", color: "var(--gray-400)" }}><i className="fas fa-spinner fa-spin" style={{ fontSize: "1.5rem" }} /></div>;
   }
 

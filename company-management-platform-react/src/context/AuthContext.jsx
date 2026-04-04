@@ -55,12 +55,13 @@ export function AuthProvider({ children }) {
               access_token: accessToken,
               refresh_token: refreshToken || "",
             });
+            // Clean URL immediately so router stops showing spinner
+            window.history.replaceState({}, "", window.location.pathname);
             if (data?.session?.user?.email && mounted) {
               await loginUser(data.session.user.email);
-              window.history.replaceState({}, "", window.location.pathname);
-              if (mounted) setLoading(false);
-              return;
             }
+            if (mounted) setLoading(false);
+            return;
           }
         }
 
@@ -68,12 +69,12 @@ export function AuthProvider({ children }) {
         const code = new URLSearchParams(window.location.search).get("code");
         if (code) {
           const { data } = await supabase.auth.exchangeCodeForSession(code);
+          window.history.replaceState({}, "", window.location.pathname);
           if (data?.session?.user?.email && mounted) {
             await loginUser(data.session.user.email);
-            window.history.replaceState({}, "", window.location.pathname);
-            if (mounted) setLoading(false);
-            return;
           }
+          if (mounted) setLoading(false);
+          return;
         }
 
         // 3. Check existing session
