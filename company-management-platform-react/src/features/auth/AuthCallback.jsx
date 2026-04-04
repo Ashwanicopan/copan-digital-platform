@@ -33,7 +33,7 @@ export default function AuthCallback() {
         // Look up employee
         const { data: emp, error } = await supabase
           .from("employees")
-          .select("id, name, email, is_admin, is_manager, designation, avatar, department:departments(name), role:roles(name)")
+          .select("id, name, email, is_admin, is_manager, designation, avatar")
           .ilike("email", email)
           .single();
 

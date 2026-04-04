@@ -22,7 +22,7 @@ export function AuthProvider({ children }) {
     try {
       const { data, error } = await supabase
         .from("employees")
-        .select("*, department:departments(name), role:roles(name)")
+        .select("*")
         .ilike("email", email)
         .single();
       if (error || !data) return null;
