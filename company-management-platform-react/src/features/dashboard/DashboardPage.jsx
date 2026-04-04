@@ -12,10 +12,14 @@ import CelebrationCard from "./CelebrationCard";
 export default function DashboardPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { employees, leaveRequests } = useData();
+  const { employees, leaveRequests, attendance } = useData();
   const total = employees.length;
-  const active = employees.filter((e) => e.status === "active").length;
-  const onLeave = employees.filter((e) => e.status === "on-leave").length;
+  const todayStr = new Date().toISOString().split("T")[0];
+  const todayAttendance = attendance.filter((a) => a.date === todayStr);
+  const presentToday = todayAttendance.filter((a) => a.status === "present").length;
+  const absentToday = todayAttendance.filter((a) => a.status === "absent").length;
+  const onLeaveToday = todayAttendance.filter((a) => a.status === "on-leave").length + employees.filter((e) => e.status === "on-leave").length;
+  const notMarked = total - presentToday - absentToday - onLeaveToday;
   const pending = leaveRequests.filter((l) => l.status === "pending").length;
 
   const hour = new Date().getHours();
@@ -31,13 +35,13 @@ export default function DashboardPage() {
           userName={user?.name}
           today={today}
           pending={pending}
-          presentCount={active - 1}
+          presentCount={presentToday}
         />
 
         <div className="stats-grid" style={{ gridTemplateColumns: "1fr 1fr 1fr" }}>
-          <StatCard title="Employee Present Today" value={active - 1} subtitle={`${Math.round(((active - 1) / total) * 100)}% attendance`} icon="fa-user-check" color="green" />
-          <StatCard title="Employee Absent Today" value={onLeave} subtitle={`${pending} pending requests`} icon="fa-calendar-times" color="orange" />
-          <StatCard title="Employee Not Marked" value={total - (active - 1) - onLeave} subtitle="Attendance pending" icon="fa-user-clock" color="red" />
+          <StatCard title="Present Today" value={presentToday} subtitle={total > 0 ? `${Math.round((presentToday / total) * 100)}% attendance` : "No employees"} icon="fa-user-check" color="green" />
+          <StatCard title="On Leave / Absent" value={onLeaveToday + absentToday} subtitle={`${pending} pending leave requests`} icon="fa-calendar-times" color="orange" />
+          <StatCard title="Not Marked Yet" value={Math.max(0, notMarked)} subtitle="Attendance pending" icon="fa-user-clock" color="red" />
         </div>
 
         <div className="dashboard-grid">
