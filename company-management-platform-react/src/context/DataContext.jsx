@@ -356,9 +356,19 @@ export function DataProvider({ children }) {
         avatar: empData.avatar,
         role_id: empData.roleId || 4,
         password: empData.password || "copan123",
-      }).select(`*, department:departments(id, name), location:locations(id, name), role:roles(id, name, color), manager:employees!manager_id(id, name, employee_id)`).single();
+      }).select("*").single();
       if (error) throw error;
-      const emp = transformEmployee(data);
+      const emp = {
+        id: data.id, name: data.name, email: data.email, phone: data.phone,
+        department: empData.department || "", departmentId: deptId,
+        designation: data.designation, location: empData.location || "", locationId: locId,
+        joinDate: data.join_date, salary: 0, status: "active",
+        avatar: data.avatar, avatarUrl: data.avatar_url || null,
+        employeeId: data.employee_id, managerId: null, manager: null,
+        paymentMode: data.payment_mode, bankName: data.bank_name,
+        bankAccount: data.bank_account, pan: data.pan, uan: data.uan,
+        isAdmin: false, isManager: false,
+      };
       setEmployees((prev) => [...prev, emp]);
       return emp;
     } else {
