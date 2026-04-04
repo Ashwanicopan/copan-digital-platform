@@ -37,43 +37,87 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
+  async function handleSession(session) {
+    if (session?.user?.email) {
+      const matched = await matchEmployee(session.user.email);
+      if (matched) {
+        setIsLoggedIn(true);
+        setUser(matched);
+        return true;
+      }
+    }
+    return false;
+  }
+
   useEffect(() => {
     let mounted = true;
 
-    // Safety timeout
-    const timeout = setTimeout(() => {
-      if (mounted && loading) setLoading(false);
-    }, 5000);
+    async function init() {
+      // Check if URL has auth tokens (returning from Google OAuth)
+      const hasAuthParams = window.location.hash.includes("access_token") ||
+        window.location.search.includes("code=");
 
-    // Listen for auth changes — this handles BOTH initial load and Google redirect
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (!mounted) return;
-
-      if (session?.user?.email) {
-        const matched = await matchEmployee(session.user.email);
-        if (matched && mounted) {
-          setIsLoggedIn(true);
-          setUser(matched);
+      if (hasAuthParams) {
+        // Wait for Supabase to process the URL tokens
+        // exchangeCodeForSession handles PKCE, setSession handles implicit
+        const { data, error } = await supabase.auth.getSession();
+        if (!error && data?.session && mounted) {
+          const success = await handleSession(data.session);
+          if (success && mounted) {
+            // Clean up URL
+            window.history.replaceState({}, "", window.location.pathname);
+            setLoading(false);
+            return;
+          }
         }
+
+        // If getSession didn't work immediately, wait a moment and retry
+        // (tokens might still be processing)
+        await new Promise((r) => setTimeout(r, 1500));
+        const { data: retryData } = await supabase.auth.getSession();
+        if (retryData?.session && mounted) {
+          await handleSession(retryData.session);
+          window.history.replaceState({}, "", window.location.pathname);
+        }
+        if (mounted) setLoading(false);
+        return;
       }
 
+      // No auth params — just check existing session
+      const { data } = await supabase.auth.getSession();
+      if (data?.session && mounted) {
+        await handleSession(data.session);
+      }
+      if (mounted) setLoading(false);
+    }
+
+    init();
+
+    // Also listen for future auth changes (sign out, token refresh)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!mounted) return;
+      if (event === "SIGNED_IN" && session?.user?.email) {
+        await handleSession(session);
+        setLoading(false);
+      }
       if (event === "SIGNED_OUT") {
         setIsLoggedIn(false);
         setUser(null);
       }
-
-      // Always stop loading after any auth event
-      if (mounted) setLoading(false);
     });
+
+    // Safety timeout
+    const timeout = setTimeout(() => {
+      if (mounted) setLoading(false);
+    }, 8000);
 
     return () => {
       mounted = false;
       clearTimeout(timeout);
       subscription.unsubscribe();
     };
-  }, [matchEmployee]);
+  }, []);
 
-  // Google SSO login
   async function loginWithGoogle() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
@@ -86,7 +130,6 @@ export function AuthProvider({ children }) {
     return { success: true };
   }
 
-  // Fallback email/password login
   async function login(email, password) {
     const domain = email.split("@")[1]?.toLowerCase();
     if (domain !== ALLOWED_DOMAIN) {
