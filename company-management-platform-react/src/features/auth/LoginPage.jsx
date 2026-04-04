@@ -13,17 +13,8 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [showManualLogin, setShowManualLogin] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const [debugInfo, setDebugInfo] = useState("");
 
-  useEffect(() => {
-    setMounted(true);
-    // Show debug info about what came back from Google
-    const hash = window.location.hash;
-    const search = window.location.search;
-    if (hash || search) {
-      setDebugInfo(`URL has: ${hash ? "hash tokens" : ""}${search ? " query params" : ""} | hash length: ${hash.length} | search: ${search.substring(0, 50)}`);
-    }
-  }, []);
+  useEffect(() => { setMounted(true); }, []);
 
   function validateDomain(emailStr) {
     const domain = emailStr.split("@")[1]?.toLowerCase();
@@ -130,11 +121,6 @@ export default function LoginPage() {
             </div>
           )}
 
-          {debugInfo && (
-            <div style={{ padding: 10, background: "#fffbe6", border: "1px solid #faad14", borderRadius: 6, fontSize: "0.72rem", color: "#8c6d1f", marginBottom: 12, wordBreak: "break-all" }}>
-              Debug: {debugInfo}
-            </div>
-          )}
 
           {/* Google SSO - Primary */}
           <button

@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import AppLayout from "../components/layout/AppLayout";
 import LoginPage from "../features/auth/LoginPage";
+import AuthCallback from "../features/auth/AuthCallback";
 import DashboardPage from "../features/dashboard/DashboardPage";
 import EmployeeListPage from "../features/employees/EmployeeListPage";
 import EmployeeProfilePage from "../features/employees/EmployeeProfilePage";
@@ -18,16 +19,14 @@ function ProtectedRoute({ children }) {
 export default function AppRoutes() {
   const { isLoggedIn, loading } = useAuth();
 
-  // Don't redirect while auth is loading OR while URL has OAuth tokens
-  const hasAuthTokens = window.location.hash.includes("access_token") || window.location.search.includes("code=");
-
-  if (loading || hasAuthTokens) {
+  if (loading) {
     return <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", color: "var(--gray-400)" }}><i className="fas fa-spinner fa-spin" style={{ fontSize: "1.5rem" }} /></div>;
   }
 
   return (
     <Routes>
       <Route path="/login" element={isLoggedIn ? <Navigate to="/dashboard" replace /> : <LoginPage />} />
+      <Route path="/auth/callback" element={<AuthCallback />} />
       <Route
         element={
           <ProtectedRoute>

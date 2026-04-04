@@ -105,7 +105,7 @@ export function AuthProvider({ children }) {
       provider: "google",
       options: {
         queryParams: { hd: ALLOWED_DOMAIN },
-        redirectTo: window.location.origin,
+        redirectTo: window.location.origin + "/auth/callback",
       },
     });
     if (error) return { success: false, message: error.message };
