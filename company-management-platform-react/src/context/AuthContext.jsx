@@ -4,10 +4,18 @@ import { supabase } from "../lib/supabase";
 const AuthContext = createContext(null);
 const ALLOWED_DOMAIN = "copancs.com";
 
+function loadSavedUser() {
+  try {
+    const saved = localStorage.getItem("copan_user");
+    return saved ? JSON.parse(saved) : null;
+  } catch { return null; }
+}
+
 export function AuthProvider({ children }) {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const savedUser = loadSavedUser();
+  const [isLoggedIn, setIsLoggedIn] = useState(!!savedUser);
+  const [user, setUser] = useState(savedUser);
+  const [loading, setLoading] = useState(!savedUser);
 
   const matchEmployee = useCallback(async (email) => {
     if (!email) return null;
@@ -29,61 +37,29 @@ export function AuthProvider({ children }) {
     } catch { return null; }
   }, []);
 
-  const loginUser = useCallback(async (email) => {
-    const matched = await matchEmployee(email);
-    if (matched) {
-      setIsLoggedIn(true);
-      setUser(matched);
-      return true;
-    }
-    return false;
-  }, [matchEmployee]);
-
   useEffect(() => {
     let mounted = true;
 
     async function init() {
-      try {
-        // 1. Check URL hash for tokens (implicit flow redirect from Google)
-        const hash = window.location.hash;
-        if (hash && hash.includes("access_token")) {
-          const params = new URLSearchParams(hash.substring(1));
-          const accessToken = params.get("access_token");
-          const refreshToken = params.get("refresh_token");
-          if (accessToken) {
-            const { data } = await supabase.auth.setSession({
-              access_token: accessToken,
-              refresh_token: refreshToken || "",
-            });
-            // Clean URL immediately so router stops showing spinner
-            window.history.replaceState({}, "", window.location.pathname);
-            if (data?.session?.user?.email && mounted) {
-              await loginUser(data.session.user.email);
-            }
-            if (mounted) setLoading(false);
-            return;
-          }
-        }
-
-        // 2. Check URL query for code (PKCE flow)
-        const code = new URLSearchParams(window.location.search).get("code");
-        if (code) {
-          const { data } = await supabase.auth.exchangeCodeForSession(code);
-          window.history.replaceState({}, "", window.location.pathname);
-          if (data?.session?.user?.email && mounted) {
-            await loginUser(data.session.user.email);
-          }
-          if (mounted) setLoading(false);
-          return;
-        }
-
-        // 3. Check existing session
+      // If user is already loaded from localStorage, verify session is still valid
+      if (savedUser) {
         const { data } = await supabase.auth.getSession();
-        if (data?.session?.user?.email && mounted) {
-          await loginUser(data.session.user.email);
+        if (!data?.session) {
+          // No Supabase session — still allow if user is in localStorage (password login)
         }
-      } catch (e) {
-        console.warn("Auth error:", e);
+        if (mounted) setLoading(false);
+        return;
+      }
+
+      // Check for existing Supabase session
+      const { data } = await supabase.auth.getSession();
+      if (data?.session?.user?.email && mounted) {
+        const matched = await matchEmployee(data.session.user.email);
+        if (matched && mounted) {
+          setIsLoggedIn(true);
+          setUser(matched);
+          localStorage.setItem("copan_user", JSON.stringify(matched));
+        }
       }
       if (mounted) setLoading(false);
     }
@@ -94,11 +70,14 @@ export function AuthProvider({ children }) {
       if (event === "SIGNED_OUT" && mounted) {
         setIsLoggedIn(false);
         setUser(null);
+        localStorage.removeItem("copan_user");
       }
     });
 
-    return () => { mounted = false; subscription.unsubscribe(); };
-  }, [loginUser]);
+    const timeout = setTimeout(() => { if (mounted) setLoading(false); }, 5000);
+
+    return () => { mounted = false; clearTimeout(timeout); subscription.unsubscribe(); };
+  }, [matchEmployee]);
 
   async function loginWithGoogle() {
     const { error } = await supabase.auth.signInWithOAuth({
@@ -123,6 +102,7 @@ export function AuthProvider({ children }) {
     if (data?.password && data.password === password) {
       setIsLoggedIn(true);
       setUser(matched);
+      localStorage.setItem("copan_user", JSON.stringify(matched));
       return { success: true };
     }
     return { success: false, message: "Invalid password" };
@@ -132,10 +112,15 @@ export function AuthProvider({ children }) {
     await supabase.auth.signOut();
     setIsLoggedIn(false);
     setUser(null);
+    localStorage.removeItem("copan_user");
   }
 
   return (
-    <AuthContext.Provider value={{ isLoggedIn, user, login, loginWithGoogle, logout, canApproveLeave: () => user?.isAdmin || user?.isManager || false, getTeamMemberIds: () => [], loading }}>
+    <AuthContext.Provider value={{
+      isLoggedIn, user, login, loginWithGoogle, logout, loading,
+      canApproveLeave: () => user?.isAdmin || user?.isManager || false,
+      getTeamMemberIds: () => [],
+    }}>
       {children}
     </AuthContext.Provider>
   );
