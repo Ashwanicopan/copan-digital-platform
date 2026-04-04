@@ -11,70 +11,59 @@ export function AuthProvider({ children }) {
 
   const matchEmployee = useCallback(async (email) => {
     if (!email) return null;
-    const { data, error } = await supabase
-      .from("employees")
-      .select("*, department:departments(name), role:roles(name)")
-      .ilike("email", email)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from("employees")
+        .select("*, department:departments(name), role:roles(name)")
+        .ilike("email", email)
+        .single();
 
-    if (error || !data) return null;
+      if (error || !data) return null;
 
-    const initials = data.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
-    return {
-      id: data.id,
-      name: data.name,
-      email: data.email,
-      role: data.is_admin ? "HR Admin" : data.is_manager ? "Manager" : "Employee",
-      avatar: data.avatar || initials,
-      isAdmin: data.is_admin || false,
-      isManager: data.is_manager || false,
-      department: data.department?.name || "",
-      designation: data.designation || "",
-    };
+      const initials = data.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
+      return {
+        id: data.id,
+        name: data.name,
+        email: data.email,
+        role: data.is_admin ? "HR Admin" : data.is_manager ? "Manager" : "Employee",
+        avatar: data.avatar || initials,
+        isAdmin: data.is_admin || false,
+        isManager: data.is_manager || false,
+        department: data.department?.name || "",
+        designation: data.designation || "",
+      };
+    } catch {
+      return null;
+    }
   }, []);
 
   useEffect(() => {
     let mounted = true;
 
-    // Timeout safety — never stay loading forever
+    // Safety timeout
     const timeout = setTimeout(() => {
-      if (mounted) setLoading(false);
-    }, 3000);
+      if (mounted && loading) setLoading(false);
+    }, 5000);
 
-    async function init() {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user?.email && mounted) {
-          const matched = await matchEmployee(session.user.email);
-          if (matched && mounted) {
-            setIsLoggedIn(true);
-            setUser(matched);
-          }
-        }
-      } catch (e) {
-        console.warn("Session check failed:", e);
-      }
-      if (mounted) setLoading(false);
-    }
-
-    init();
-
+    // Listen for auth changes — this handles BOTH initial load and Google redirect
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return;
 
-      if ((event === "SIGNED_IN" || event === "TOKEN_REFRESHED") && session?.user?.email) {
+      if (session?.user?.email) {
         const matched = await matchEmployee(session.user.email);
         if (matched && mounted) {
           setIsLoggedIn(true);
           setUser(matched);
         }
-        if (mounted) setLoading(false);
       }
 
-      if (event === "SIGNED_OUT" && mounted) {
+      if (event === "SIGNED_OUT") {
         setIsLoggedIn(false);
         setUser(null);
       }
+
+      // Always stop loading after any auth event
+      if (mounted) setLoading(false);
     });
 
     return () => {
@@ -90,7 +79,7 @@ export function AuthProvider({ children }) {
       provider: "google",
       options: {
         queryParams: { hd: ALLOWED_DOMAIN },
-        redirectTo: window.location.origin + "/dashboard",
+        redirectTo: window.location.origin,
       },
     });
     if (error) return { success: false, message: error.message };
@@ -130,11 +119,9 @@ export function AuthProvider({ children }) {
     setUser(null);
   }
 
-  function canApproveLeave(employeeId) {
+  function canApproveLeave() {
     if (!user) return false;
-    if (user.isAdmin) return true;
-    if (user.isManager) return true;
-    return false;
+    return user.isAdmin || user.isManager;
   }
 
   function getTeamMemberIds() {
