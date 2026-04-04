@@ -37,86 +37,77 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
-  async function handleSession(session) {
-    if (session?.user?.email) {
-      const matched = await matchEmployee(session.user.email);
-      if (matched) {
-        setIsLoggedIn(true);
-        setUser(matched);
-        return true;
-      }
-    }
-    return false;
-  }
-
   useEffect(() => {
     let mounted = true;
 
     async function init() {
-      // Check if URL has auth tokens (returning from Google OAuth)
-      const hasAuthParams = window.location.hash.includes("access_token") ||
-        window.location.search.includes("code=");
+      try {
+        // Step 1: Check if returning from Google OAuth (PKCE code in URL)
+        const params = new URLSearchParams(window.location.search);
+        const code = params.get("code");
 
-      if (hasAuthParams) {
-        // Wait for Supabase to process the URL tokens
-        // exchangeCodeForSession handles PKCE, setSession handles implicit
-        const { data, error } = await supabase.auth.getSession();
-        if (!error && data?.session && mounted) {
-          const success = await handleSession(data.session);
-          if (success && mounted) {
-            // Clean up URL
-            window.history.replaceState({}, "", window.location.pathname);
-            setLoading(false);
-            return;
+        if (code) {
+          // Exchange the PKCE code for a session
+          const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+          if (!error && data?.session?.user?.email && mounted) {
+            const matched = await matchEmployee(data.session.user.email);
+            if (matched && mounted) {
+              setIsLoggedIn(true);
+              setUser(matched);
+              // Clean up URL
+              window.history.replaceState({}, "", window.location.pathname);
+            }
+          }
+          if (mounted) setLoading(false);
+          return;
+        }
+
+        // Step 2: Check for hash tokens (implicit flow fallback)
+        if (window.location.hash.includes("access_token")) {
+          const { data } = await supabase.auth.getSession();
+          if (data?.session?.user?.email && mounted) {
+            const matched = await matchEmployee(data.session.user.email);
+            if (matched && mounted) {
+              setIsLoggedIn(true);
+              setUser(matched);
+              window.history.replaceState({}, "", window.location.pathname);
+            }
+          }
+          if (mounted) setLoading(false);
+          return;
+        }
+
+        // Step 3: Check existing session (already logged in)
+        const { data } = await supabase.auth.getSession();
+        if (data?.session?.user?.email && mounted) {
+          const matched = await matchEmployee(data.session.user.email);
+          if (matched && mounted) {
+            setIsLoggedIn(true);
+            setUser(matched);
           }
         }
-
-        // If getSession didn't work immediately, wait a moment and retry
-        // (tokens might still be processing)
-        await new Promise((r) => setTimeout(r, 1500));
-        const { data: retryData } = await supabase.auth.getSession();
-        if (retryData?.session && mounted) {
-          await handleSession(retryData.session);
-          window.history.replaceState({}, "", window.location.pathname);
-        }
-        if (mounted) setLoading(false);
-        return;
+      } catch (e) {
+        console.warn("Auth init error:", e);
       }
 
-      // No auth params — just check existing session
-      const { data } = await supabase.auth.getSession();
-      if (data?.session && mounted) {
-        await handleSession(data.session);
-      }
       if (mounted) setLoading(false);
     }
 
     init();
 
-    // Also listen for future auth changes (sign out, token refresh)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (!mounted) return;
-      if (event === "SIGNED_IN" && session?.user?.email) {
-        await handleSession(session);
-        setLoading(false);
-      }
-      if (event === "SIGNED_OUT") {
+    // Listen for sign out
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_OUT" && mounted) {
         setIsLoggedIn(false);
         setUser(null);
       }
     });
 
-    // Safety timeout
-    const timeout = setTimeout(() => {
-      if (mounted) setLoading(false);
-    }, 8000);
-
     return () => {
       mounted = false;
-      clearTimeout(timeout);
       subscription.unsubscribe();
     };
-  }, []);
+  }, [matchEmployee]);
 
   async function loginWithGoogle() {
     const { error } = await supabase.auth.signInWithOAuth({
