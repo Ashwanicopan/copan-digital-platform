@@ -40,71 +40,31 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     let mounted = true;
 
-    async function init() {
-      try {
-        // Step 1: Check if returning from Google OAuth (PKCE code in URL)
-        const params = new URLSearchParams(window.location.search);
-        const code = params.get("code");
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!mounted) return;
 
-        if (code) {
-          // Exchange the PKCE code for a session
-          const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-          if (!error && data?.session?.user?.email && mounted) {
-            const matched = await matchEmployee(data.session.user.email);
-            if (matched && mounted) {
-              setIsLoggedIn(true);
-              setUser(matched);
-              // Clean up URL
-              window.history.replaceState({}, "", window.location.pathname);
-            }
-          }
-          if (mounted) setLoading(false);
-          return;
+      if (session?.user?.email) {
+        const matched = await matchEmployee(session.user.email);
+        if (matched && mounted) {
+          setIsLoggedIn(true);
+          setUser(matched);
         }
-
-        // Step 2: Check for hash tokens (implicit flow fallback)
-        if (window.location.hash.includes("access_token")) {
-          const { data } = await supabase.auth.getSession();
-          if (data?.session?.user?.email && mounted) {
-            const matched = await matchEmployee(data.session.user.email);
-            if (matched && mounted) {
-              setIsLoggedIn(true);
-              setUser(matched);
-              window.history.replaceState({}, "", window.location.pathname);
-            }
-          }
-          if (mounted) setLoading(false);
-          return;
-        }
-
-        // Step 3: Check existing session (already logged in)
-        const { data } = await supabase.auth.getSession();
-        if (data?.session?.user?.email && mounted) {
-          const matched = await matchEmployee(data.session.user.email);
-          if (matched && mounted) {
-            setIsLoggedIn(true);
-            setUser(matched);
-          }
-        }
-      } catch (e) {
-        console.warn("Auth init error:", e);
-      }
-
-      if (mounted) setLoading(false);
-    }
-
-    init();
-
-    // Listen for sign out
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "SIGNED_OUT" && mounted) {
+      } else if (event === "SIGNED_OUT") {
         setIsLoggedIn(false);
         setUser(null);
       }
+
+      if (mounted) setLoading(false);
     });
+
+    // Safety timeout
+    const timeout = setTimeout(() => {
+      if (mounted) setLoading(false);
+    }, 5000);
 
     return () => {
       mounted = false;
+      clearTimeout(timeout);
       subscription.unsubscribe();
     };
   }, [matchEmployee]);
