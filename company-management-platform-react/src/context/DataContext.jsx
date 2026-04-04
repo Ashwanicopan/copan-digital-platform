@@ -32,6 +32,7 @@ function transformEmployee(row) {
     pan: row.pan,
     uan: row.uan,
     authUserId: row.auth_user_id,
+    avatarUrl: row.avatar_url || null,
   };
 }
 

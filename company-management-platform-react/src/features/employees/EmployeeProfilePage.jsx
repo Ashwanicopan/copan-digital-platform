@@ -30,7 +30,7 @@ export default function EmployeeProfilePage() {
         </button>
 
         <div className="profile-header">
-          <Avatar name={emp.name} initials={emp.avatar} size="lg" />
+          <Avatar name={emp.name} initials={emp.avatar} avatarUrl={emp.avatarUrl} size="lg" />
           <div className="profile-info">
             <h2>{emp.name}</h2>
             <div className="designation">{emp.designation} &middot; {emp.department}</div>

@@ -83,7 +83,7 @@ export default function DashboardPage() {
                           <tr key={l.id}>
                             <td>
                               <div className="employee-cell">
-                                <Avatar name={l.employeeName} initials={emp?.avatar || "?"} />
+                                <Avatar name={l.employeeName} initials={emp?.avatar || "?"} avatarUrl={emp?.avatarUrl} />
                                 <div><div className="name">{l.employeeName}</div></div>
                               </div>
                             </td>

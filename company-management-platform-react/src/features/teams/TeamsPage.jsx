@@ -110,7 +110,7 @@ export default function TeamsPage() {
                   checked={form.memberIds.includes(String(e.id))}
                   onChange={() => toggleMember(String(e.id))}
                 />
-                <Avatar name={e.name} initials={e.avatar} />
+                <Avatar name={e.name} initials={e.avatar} avatarUrl={e.avatarUrl} />
                 <div>
                   <div className="name">{e.name}</div>
                   <div className="sub">{e.designation}</div>
@@ -170,7 +170,7 @@ export default function TeamsPage() {
                   <div className="detail-label">Team Manager</div>
                   {manager ? (
                     <div className="team-manager-row" onClick={() => navigate(`/employees/${manager.id}`)}>
-                      <Avatar name={manager.name} initials={manager.avatar} />
+                      <Avatar name={manager.name} initials={manager.avatar} avatarUrl={manager.avatarUrl} />
                       <div>
                         <div className="name">{manager.name}</div>
                         <div className="sub">{manager.designation}</div>
@@ -187,7 +187,7 @@ export default function TeamsPage() {
                   <div className="team-members-list">
                     {members.map((m) => (
                       <div key={m.id} className="team-member-row" onClick={() => navigate(`/employees/${m.id}`)}>
-                        <Avatar name={m.name} initials={m.avatar} />
+                        <Avatar name={m.name} initials={m.avatar} avatarUrl={m.avatarUrl} />
                         <div>
                           <div className="name">{m.name}</div>
                           <div className="sub">{m.designation}</div>

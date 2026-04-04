@@ -67,7 +67,7 @@ export default function AttendancePage() {
                     <tr key={log.employeeId}>
                       <td>
                         <div className="employee-cell">
-                          <Avatar name={emp.name} initials={emp.avatar} />
+                          <Avatar name={emp.name} initials={emp.avatar} avatarUrl={emp.avatarUrl} />
                           <div><div className="name">{emp.name}</div><div className="sub">{emp.department}</div></div>
                         </div>
                       </td>

@@ -30,22 +30,28 @@ export default function AuthCallback() {
         const email = session.user.email;
         setStatus(`Authenticated as ${email}. Checking employee record...`);
 
+        // Get Google avatar URL from auth user metadata
+        const googleAvatarUrl = session.user.user_metadata?.avatar_url || session.user.user_metadata?.picture || null;
+
         // Look up employee
         const { data: emp, error } = await supabase
           .from("employees")
-          .select("id, name, email, is_admin, is_manager, designation, avatar")
+          .select("id, name, email, is_admin, is_manager, designation, avatar, avatar_url")
           .ilike("email", email)
           .single();
 
         if (error || !emp) {
           setStatus(`Employee not found for ${email}. Error: ${error?.message || "No record"}. Redirecting...`);
-          // Sign out from Supabase since employee doesn't exist
           await supabase.auth.signOut();
           setTimeout(() => navigate("/login"), 3000);
           return;
         }
 
-        // Store user in localStorage so AuthContext can pick it up
+        // Update avatar_url in database if we got one from Google
+        if (googleAvatarUrl && googleAvatarUrl !== emp.avatar_url) {
+          await supabase.from("employees").update({ avatar_url: googleAvatarUrl }).eq("id", emp.id);
+        }
+
         const initials = emp.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
         const userData = {
           id: emp.id,
@@ -53,9 +59,9 @@ export default function AuthCallback() {
           email: emp.email,
           role: emp.is_admin ? "HR Admin" : emp.is_manager ? "Manager" : "Employee",
           avatar: emp.avatar || initials,
+          avatarUrl: googleAvatarUrl || emp.avatar_url || null,
           isAdmin: emp.is_admin || false,
           isManager: emp.is_manager || false,
-          department: emp.department?.name || "",
           designation: emp.designation || "",
         };
         localStorage.setItem("copan_user", JSON.stringify(userData));

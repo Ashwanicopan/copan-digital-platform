@@ -104,7 +104,7 @@ export default function EmployeeListPage() {
                     <tr key={emp.id} className="clickable-row" onClick={() => navigate(`/employees/${emp.id}`)}>
                       <td>
                         <div className="employee-cell">
-                          <Avatar name={emp.name} initials={emp.avatar} />
+                          <Avatar name={emp.name} initials={emp.avatar} avatarUrl={emp.avatarUrl} />
                           <div><div className="name">{emp.name}</div><div className="sub">{emp.email}</div></div>
                         </div>
                       </td>

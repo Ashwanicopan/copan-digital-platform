@@ -10,6 +10,7 @@ import AttendancePage from "../features/attendance/AttendancePage";
 import LeavePage from "../features/leave/LeavePage";
 import PayrollPage from "../features/payroll/PayrollPage";
 import SettingsPage from "../features/settings/SettingsPage";
+import ProfilePage from "../features/profile/ProfilePage";
 
 function ProtectedRoute({ children }) {
   const { isLoggedIn } = useAuth();
@@ -41,6 +42,7 @@ export default function AppRoutes() {
         <Route path="/leave" element={<LeavePage />} />
         <Route path="/payroll" element={<PayrollPage />} />
         <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
       </Route>
       <Route path="*" element={<Navigate to={isLoggedIn ? "/dashboard" : "/login"} replace />} />
     </Routes>

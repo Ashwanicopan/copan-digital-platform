@@ -1,4 +1,4 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useData } from "../../context/DataContext";
 import copanLogo from "../../assets/images/copan-logo.png";
@@ -19,6 +19,7 @@ const navItems = [
 export default function Sidebar() {
   const { user, logout } = useAuth();
   const { leaveRequests } = useData();
+  const navigate = useNavigate();
   const pendingLeaves = leaveRequests.filter((l) => l.status === "pending").length;
   const isAdmin = user?.isAdmin;
 
@@ -54,14 +55,19 @@ export default function Sidebar() {
       </nav>
 
       <div className="sidebar-footer">
-        <div className="sidebar-user" onClick={logout} title="Sign out">
-          <div className="avatar" style={{ background: "var(--primary-light)", width: 34, height: 34, fontSize: "0.75rem" }}>
-            {user?.avatar}
-          </div>
+        <div className="sidebar-user" onClick={() => navigate("/profile")} style={{ cursor: "pointer" }} title="View Profile">
+          {user?.avatarUrl ? (
+            <img src={user.avatarUrl} alt={user?.name} referrerPolicy="no-referrer" style={{ width: 34, height: 34, borderRadius: "50%", objectFit: "cover" }} />
+          ) : (
+            <div className="avatar" style={{ background: "var(--primary-light)", width: 34, height: 34, fontSize: "0.75rem" }}>
+              {user?.avatar}
+            </div>
+          )}
           <div className="user-info">
             <div className="name">{user?.name}</div>
             <div className="role">{user?.role}</div>
           </div>
+          <i className="fas fa-chevron-right" style={{ marginLeft: "auto", fontSize: "0.7rem", color: "var(--gray-500)" }} />
         </div>
       </div>
     </aside>

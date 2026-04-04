@@ -75,7 +75,7 @@ export default function CelebrationCard() {
               <div className="celebration-info">
                 <div className="celebration-top">
                   <div className="celebration-employee">
-                    <Avatar name={event.employee.name} initials={event.employee.avatar} />
+                    <Avatar name={event.employee.name} initials={event.employee.avatar} avatarUrl={event.employee.avatarUrl} />
                     <div>
                       <div className="name">{event.employee.name}</div>
                       <div className="sub">{event.detail}</div>

@@ -100,7 +100,7 @@ export default function PayrollPage() {
                     <tr key={p.employeeId} className="clickable-row" onClick={() => openPayslip(p)}>
                       <td>
                         <div className="employee-cell">
-                          <Avatar name={emp.name} initials={emp.avatar} />
+                          <Avatar name={emp.name} initials={emp.avatar} avatarUrl={emp.avatarUrl} />
                           <div><div className="name">{emp.name}</div><div className="sub">{emp.employeeId}</div></div>
                         </div>
                       </td>
