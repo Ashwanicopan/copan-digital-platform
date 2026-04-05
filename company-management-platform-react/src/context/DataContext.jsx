@@ -356,6 +356,7 @@ export function DataProvider({ children }) {
         avatar: empData.avatar,
         role_id: empData.roleId || 4,
         password: empData.password || "copan123",
+        shift_id: empData.shiftId || null,
       }).select("*").single();
       if (error) throw error;
       const emp = {

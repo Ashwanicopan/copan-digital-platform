@@ -9,10 +9,12 @@ import PayrollSettings from "./tabs/PayrollSettings";
 import PenaltyRulesSettings from "./tabs/PenaltyRulesSettings";
 import HolidaySettings from "./tabs/HolidaySettings";
 import OrganizationSettings from "./tabs/OrganizationSettings";
+import ShiftSettings from "./tabs/ShiftSettings";
 
 const tabs = [
   { id: "company", icon: "fa-building", label: "Company Profile" },
   { id: "organization", icon: "fa-sitemap", label: "Organization" },
+  { id: "shifts", icon: "fa-clock", label: "Shifts" },
   { id: "roles", icon: "fa-user-shield", label: "Roles & Permissions" },
   { id: "leave-policy", icon: "fa-calendar-alt", label: "Leave Policy" },
   { id: "holidays", icon: "fa-umbrella-beach", label: "Holidays" },
@@ -24,6 +26,7 @@ const tabs = [
 const tabComponents = {
   company: CompanySettings,
   organization: OrganizationSettings,
+  shifts: ShiftSettings,
   roles: RolesSettings,
   "leave-policy": LeavePolicySettings,
   holidays: HolidaySettings,
