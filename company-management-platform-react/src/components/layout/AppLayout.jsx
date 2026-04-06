@@ -3,9 +3,9 @@ import Sidebar from "./Sidebar";
 
 export default function AppLayout() {
   return (
-    <div className="app-shell">
+    <div className="flex min-h-screen bg-gray-50">
       <Sidebar />
-      <div className="main-area">
+      <div className="ml-[260px] flex-1 min-h-screen">
         <Outlet />
       </div>
     </div>
