@@ -4,13 +4,16 @@ import Header from "../../components/layout/Header";
 import Avatar from "../../components/ui/Avatar";
 import Badge from "../../components/ui/Badge";
 import Modal from "../../components/ui/Modal";
+import { useAuth } from "../../context/AuthContext";
 import { useData } from "../../context/DataContext";
 import { COMPANY } from "../../data/mockData";
 import { supabase } from "../../lib/supabase";
 
 export default function EmployeeListPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { employees, departments, locations, addEmployee } = useData();
+  const isAdmin = user?.isAdmin;
   const [search, setSearch] = useState("");
   const [deptFilter, setDeptFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
@@ -94,9 +97,11 @@ export default function EmployeeListPage() {
               <option value="on-leave">On Leave</option>
             </select>
           </div>
-          <button className="btn btn-primary" onClick={openAddModal}>
-            <i className="fas fa-plus" /> Add Employee
-          </button>
+          {isAdmin && (
+            <button className="btn btn-primary" onClick={openAddModal}>
+              <i className="fas fa-plus" /> Add Employee
+            </button>
+          )}
         </div>
 
         <div className="employee-stats">
