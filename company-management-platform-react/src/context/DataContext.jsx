@@ -483,39 +483,58 @@ export function DataProvider({ children }) {
   async function clockIn(employeeId) {
     const today = new Date().toISOString().split("T")[0];
     const now = new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
-    if (usingSupabase) {
+    // Always try Supabase first
+    try {
       const { data, error } = await supabase.from("attendance").upsert({
         employee_id: employeeId,
         date: today,
         clock_in: now,
         status: "present",
       }, { onConflict: "employee_id,date" }).select().single();
-      if (error) throw error;
-      setAttendance((prev) => [...prev.filter((a) => !(a.employeeId === employeeId && a.date === today)), transformAttendance(data)]);
-    } else {
-      setAttendance((prev) => [...prev, { employeeId, date: today, clockIn: now, clockOut: null, status: "present", hours: null }]);
+      if (!error && data) {
+        setAttendance((prev) => [...prev.filter((a) => !(a.employeeId === employeeId && a.date === today)), transformAttendance(data)]);
+        return now;
+      }
+    } catch (e) {
+      console.warn("Clock in Supabase error:", e);
     }
+    // Fallback to local state
+    setAttendance((prev) => [...prev.filter((a) => !(a.employeeId === employeeId && a.date === today)), { employeeId, date: today, clockIn: now, clockOut: null, status: "present", hours: null }]);
     return now;
   }
 
   async function clockOut(employeeId) {
     const today = new Date().toISOString().split("T")[0];
     const now = new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
-    if (usingSupabase) {
-      const existing = attendance.find((a) => a.employeeId === employeeId && a.date === today);
+    try {
+      // Get clock_in time from DB for accurate hours calc
+      const { data: existing } = await supabase.from("attendance").select("clock_in").eq("employee_id", employeeId).eq("date", today).single();
       let hours = null;
-      if (existing?.clockIn) {
-        const [inH, inM] = existing.clockIn.split(":").map(Number);
+      if (existing?.clock_in) {
+        const [inH, inM] = existing.clock_in.split(":").map(Number);
         const [outH, outM] = now.split(":").map(Number);
         hours = Math.round(((outH * 60 + outM) - (inH * 60 + inM)) / 60 * 10) / 10;
       }
       const { data, error } = await supabase.from("attendance").update({ clock_out: now, hours }).eq("employee_id", employeeId).eq("date", today).select().single();
-      if (error) throw error;
-      setAttendance((prev) => prev.map((a) => (a.employeeId === employeeId && a.date === today) ? transformAttendance(data) : a));
-    } else {
-      setAttendance((prev) => prev.map((a) => (a.employeeId === employeeId && a.date === today) ? { ...a, clockOut: now } : a));
+      if (!error && data) {
+        setAttendance((prev) => prev.map((a) => (a.employeeId === employeeId && a.date === today) ? transformAttendance(data) : a));
+        return now;
+      }
+    } catch (e) {
+      console.warn("Clock out Supabase error:", e);
     }
+    setAttendance((prev) => prev.map((a) => (a.employeeId === employeeId && a.date === today) ? { ...a, clockOut: now } : a));
     return now;
+  }
+
+  // Refresh attendance from Supabase
+  async function refreshAttendance() {
+    try {
+      const { data } = await supabase.from("attendance").select("*").order("date", { ascending: false });
+      if (data) setAttendance(data.map(transformAttendance));
+    } catch (e) {
+      console.warn("Refresh attendance error:", e);
+    }
   }
 
   const value = {
@@ -543,6 +562,7 @@ export function DataProvider({ children }) {
     deleteTeam,
     clockIn,
     clockOut,
+    refreshAttendance,
     refresh: fetchAll,
   };
 

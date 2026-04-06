@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useData } from "../../context/DataContext";
@@ -12,7 +13,10 @@ import CelebrationCard from "./CelebrationCard";
 export default function DashboardPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { employees, leaveRequests, attendance } = useData();
+  const { employees, leaveRequests, attendance, refreshAttendance } = useData();
+
+  // Refresh attendance on mount
+  useEffect(() => { refreshAttendance(); }, []);
   const total = employees.length;
   const todayStr = new Date().toISOString().split("T")[0];
   const todayAttendance = attendance.filter((a) => a.date === todayStr);

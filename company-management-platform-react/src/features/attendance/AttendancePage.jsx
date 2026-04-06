@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Header from "../../components/layout/Header";
 import Avatar from "../../components/ui/Avatar";
 import Badge from "../../components/ui/Badge";
@@ -10,8 +10,15 @@ import { useClock } from "../../hooks/useClock";
 export default function AttendancePage() {
   const time = useClock();
   const { user } = useAuth();
-  const { attendance, employees, clockIn, clockOut } = useData();
+  const { attendance, employees, clockIn, clockOut, refreshAttendance } = useData();
   const todayStr = new Date().toISOString().split("T")[0];
+
+  // Refresh attendance on mount and every 30 seconds
+  useEffect(() => {
+    refreshAttendance();
+    const interval = setInterval(refreshAttendance, 30000);
+    return () => clearInterval(interval);
+  }, []);
   const [dateFilter, setDateFilter] = useState(todayStr);
 
   const logs = attendance.filter((a) => a.date === dateFilter);
