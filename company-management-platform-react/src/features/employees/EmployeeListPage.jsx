@@ -18,7 +18,7 @@ export default function EmployeeListPage() {
   const [deptFilter, setDeptFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [showModal, setShowModal] = useState(false);
-  const [form, setForm] = useState({ name: "", email: "", department: departments[0] || "", designation: "", location: locations[0] || "", shiftId: "", salary: "", bankName: "", bankAccount: "", pan: "", uan: "" });
+  const [form, setForm] = useState({ name: "", email: "", phone: "", dob: "", department: departments[0] || "", designation: "", location: locations[0] || "", shiftId: "", joinDate: new Date().toISOString().split("T")[0], managerId: "", salary: "", bankName: "", bankAccount: "", pan: "", uan: "", paymentMode: "Bank Transfer" });
   const [shifts, setShifts] = useState([]);
 
   useEffect(() => {
@@ -57,27 +57,21 @@ export default function EmployeeListPage() {
     await addEmployee({
       ...form,
       shiftId: form.shiftId ? Number(form.shiftId) : null,
+      managerId: form.managerId ? Number(form.managerId) : null,
       salary: Number(form.salary) || 0,
-      bankName: form.bankName,
-      bankAccount: form.bankAccount,
-      pan: form.pan,
-      uan: form.uan,
-      phone: "",
-      joinDate: new Date().toISOString().split("T")[0],
       status: "active",
       avatar: initials,
-      manager: null,
       employeeId: "CD-" + (1000 + employees.length + 1),
     });
     setShowModal(false);
-    setForm({ name: "", email: "", department: departments[0] || "", designation: "", location: locations[0] || "", shiftId: defaultShift ? String(defaultShift.id) : "", salary: "", bankName: "", bankAccount: "", pan: "", uan: "" });
+    setForm({ name: "", email: "", phone: "", dob: "", department: departments[0] || "", designation: "", location: locations[0] || "", shiftId: defaultShift ? String(defaultShift.id) : "", joinDate: new Date().toISOString().split("T")[0], managerId: "", salary: "", bankName: "", bankAccount: "", pan: "", uan: "", paymentMode: "Bank Transfer" });
   }
 
   function openAddModal() {
     const dept = departments[0] || "";
     const deptDesignations = designations[dept] || [];
     const defaultShift = shifts.find((s) => s.is_default);
-    setForm({ name: "", email: "", department: dept, designation: deptDesignations[0] || "", location: locations[0] || "", shiftId: defaultShift ? String(defaultShift.id) : "", salary: "", bankName: "", bankAccount: "", pan: "", uan: "" });
+    setForm({ name: "", email: "", phone: "", dob: "", department: dept, designation: deptDesignations[0] || "", location: locations[0] || "", shiftId: defaultShift ? String(defaultShift.id) : "", joinDate: new Date().toISOString().split("T")[0], managerId: "", salary: "", bankName: "", bankAccount: "", pan: "", uan: "", paymentMode: "Bank Transfer" });
     setShowModal(true);
   }
 
@@ -148,50 +142,97 @@ export default function EmployeeListPage() {
 
       <Modal isOpen={showModal} onClose={() => setShowModal(false)} title="Add New Employee">
         <form onSubmit={handleAdd}>
+          {/* Personal Details */}
+          <div style={{ marginBottom: 8 }}>
+            <h4 style={{ fontSize: "0.85rem", color: "var(--gray-600)", marginBottom: 12 }}>Personal Details</h4>
+          </div>
           <div className="form-group">
             <label>Full Name</label>
             <input type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
           </div>
-          <div className="form-group">
-            <label>Email</label>
-            <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required />
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <div className="form-group">
+              <label>Email</label>
+              <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="name@copancs.com" required />
+            </div>
+            <div className="form-group">
+              <label>Phone Number</label>
+              <input type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+91 98765 43210" />
+            </div>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <div className="form-group">
+              <label>Date of Birth</label>
+              <input type="date" value={form.dob} onChange={(e) => setForm({ ...form, dob: e.target.value })} />
+            </div>
+            <div className="form-group">
+              <label>Date of Joining</label>
+              <input type="date" value={form.joinDate} onChange={(e) => setForm({ ...form, joinDate: e.target.value })} required />
+            </div>
+          </div>
+
+          {/* Employment Details */}
+          <div style={{ borderTop: "1px solid var(--gray-200)", margin: "16px 0", paddingTop: 16 }}>
+            <h4 style={{ fontSize: "0.85rem", color: "var(--gray-600)", marginBottom: 12 }}>Employment Details</h4>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <div className="form-group">
+              <label>Department</label>
+              <select value={form.department} onChange={(e) => handleDeptChange(e.target.value)}>
+                {departments.map((d) => <option key={d} value={d}>{d}</option>)}
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Designation</label>
+              <select value={form.designation} onChange={(e) => setForm({ ...form, designation: e.target.value })} required>
+                <option value="">Select Designation</option>
+                {currentDesignations.map((d) => <option key={d} value={d}>{d}</option>)}
+              </select>
+            </div>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <div className="form-group">
+              <label>Location</label>
+              <select value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })}>
+                {locations.map((l) => <option key={l} value={l}>{l}</option>)}
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Shift</label>
+              <select value={form.shiftId} onChange={(e) => setForm({ ...form, shiftId: e.target.value })} required>
+                <option value="">Select Shift</option>
+                {shifts.map((s) => {
+                  const fmt = (t) => { const [h,m] = t.split(":"); const hr = parseInt(h); return `${hr > 12 ? hr-12 : hr || 12}:${m} ${hr >= 12 ? "PM" : "AM"}`; };
+                  return <option key={s.id} value={s.id}>{s.name} ({fmt(s.start_time)} - {fmt(s.end_time)})</option>;
+                })}
+              </select>
+            </div>
           </div>
           <div className="form-group">
-            <label>Department</label>
-            <select value={form.department} onChange={(e) => handleDeptChange(e.target.value)}>
-              {departments.map((d) => <option key={d} value={d}>{d}</option>)}
-            </select>
-          </div>
-          <div className="form-group">
-            <label>Designation</label>
-            <select value={form.designation} onChange={(e) => setForm({ ...form, designation: e.target.value })} required>
-              <option value="">Select Designation</option>
-              {currentDesignations.map((d) => <option key={d} value={d}>{d}</option>)}
-            </select>
-          </div>
-          <div className="form-group">
-            <label>Location</label>
-            <select value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })}>
-              {locations.map((l) => <option key={l} value={l}>{l}</option>)}
-            </select>
-          </div>
-          <div className="form-group">
-            <label>Shift</label>
-            <select value={form.shiftId} onChange={(e) => setForm({ ...form, shiftId: e.target.value })} required>
-              <option value="">Select Shift</option>
-              {shifts.map((s) => {
-                const fmt = (t) => { const [h,m] = t.split(":"); const hr = parseInt(h); return `${hr > 12 ? hr-12 : hr || 12}:${m} ${hr >= 12 ? "PM" : "AM"}`; };
-                return <option key={s.id} value={s.id}>{s.name} ({fmt(s.start_time)} - {fmt(s.end_time)})</option>;
-              })}
+            <label>Reporting Manager</label>
+            <select value={form.managerId} onChange={(e) => setForm({ ...form, managerId: e.target.value })}>
+              <option value="">No Manager</option>
+              {employees.map((e) => <option key={e.id} value={e.id}>{e.name} — {e.designation}</option>)}
             </select>
           </div>
 
+          {/* Salary & Bank Details */}
           <div style={{ borderTop: "1px solid var(--gray-200)", margin: "16px 0", paddingTop: 16 }}>
             <h4 style={{ fontSize: "0.85rem", color: "var(--gray-600)", marginBottom: 12 }}>Salary & Bank Details</h4>
           </div>
-          <div className="form-group">
-            <label>Monthly CTC (₹)</label>
-            <input type="number" min="0" value={form.salary} onChange={(e) => setForm({ ...form, salary: e.target.value })} placeholder="e.g. 50000" required />
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <div className="form-group">
+              <label>Monthly CTC (₹)</label>
+              <input type="number" min="0" value={form.salary} onChange={(e) => setForm({ ...form, salary: e.target.value })} placeholder="e.g. 50000" required />
+            </div>
+            <div className="form-group">
+              <label>Payment Mode</label>
+              <select value={form.paymentMode} onChange={(e) => setForm({ ...form, paymentMode: e.target.value })}>
+                <option value="Bank Transfer">Bank Transfer</option>
+                <option value="Cheque">Cheque</option>
+                <option value="Cash">Cash</option>
+              </select>
+            </div>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             <div className="form-group">
