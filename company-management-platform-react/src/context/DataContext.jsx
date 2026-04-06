@@ -483,22 +483,26 @@ export function DataProvider({ children }) {
   async function clockIn(employeeId) {
     const today = new Date().toISOString().split("T")[0];
     const now = new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
-    // Always try Supabase first
     try {
-      const { data, error } = await supabase.from("attendance").upsert({
-        employee_id: employeeId,
-        date: today,
-        clock_in: now,
-        status: "present",
-      }, { onConflict: "employee_id,date" }).select().single();
-      if (!error && data) {
-        setAttendance((prev) => [...prev.filter((a) => !(a.employeeId === employeeId && a.date === today)), transformAttendance(data)]);
+      // Check if record exists for today
+      const { data: existing } = await supabase.from("attendance").select("id").eq("employee_id", employeeId).eq("date", today).single();
+
+      let result;
+      if (existing) {
+        // Update existing record
+        result = await supabase.from("attendance").update({ clock_in: now, status: "present" }).eq("id", existing.id).select().single();
+      } else {
+        // Insert new record
+        result = await supabase.from("attendance").insert({ employee_id: employeeId, date: today, clock_in: now, status: "present" }).select().single();
+      }
+
+      if (result.data) {
+        setAttendance((prev) => [...prev.filter((a) => !(a.employeeId === employeeId && a.date === today)), transformAttendance(result.data)]);
         return now;
       }
     } catch (e) {
-      console.warn("Clock in Supabase error:", e);
+      console.warn("Clock in error:", e);
     }
-    // Fallback to local state
     setAttendance((prev) => [...prev.filter((a) => !(a.employeeId === employeeId && a.date === today)), { employeeId, date: today, clockIn: now, clockOut: null, status: "present", hours: null }]);
     return now;
   }
