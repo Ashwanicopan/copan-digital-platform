@@ -355,8 +355,12 @@ export function DataProvider({ children }) {
         status: "active",
         avatar: empData.avatar,
         role_id: empData.roleId || 4,
-        password: empData.password || "copan123",
         shift_id: empData.shiftId || null,
+        salary: empData.salary || 0,
+        bank_name: empData.bankName || null,
+        bank_account: empData.bankAccount || null,
+        pan: empData.pan || null,
+        uan: empData.uan || null,
       }).select("*").single();
       if (error) throw error;
       const emp = {

@@ -18,7 +18,7 @@ export default function EmployeeListPage() {
   const [deptFilter, setDeptFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [showModal, setShowModal] = useState(false);
-  const [form, setForm] = useState({ name: "", email: "", department: departments[0] || "", designation: "", location: locations[0] || "", shiftId: "" });
+  const [form, setForm] = useState({ name: "", email: "", department: departments[0] || "", designation: "", location: locations[0] || "", shiftId: "", salary: "", bankName: "", bankAccount: "", pan: "", uan: "" });
   const [shifts, setShifts] = useState([]);
 
   useEffect(() => {
@@ -57,23 +57,27 @@ export default function EmployeeListPage() {
     await addEmployee({
       ...form,
       shiftId: form.shiftId ? Number(form.shiftId) : null,
+      salary: Number(form.salary) || 0,
+      bankName: form.bankName,
+      bankAccount: form.bankAccount,
+      pan: form.pan,
+      uan: form.uan,
       phone: "",
       joinDate: new Date().toISOString().split("T")[0],
-      salary: 0,
       status: "active",
       avatar: initials,
       manager: null,
       employeeId: "CD-" + (1000 + employees.length + 1),
     });
     setShowModal(false);
-    setForm({ name: "", email: "", department: departments[0] || "", designation: "", location: locations[0] || "", shiftId: defaultShift ? String(defaultShift.id) : "" });
+    setForm({ name: "", email: "", department: departments[0] || "", designation: "", location: locations[0] || "", shiftId: defaultShift ? String(defaultShift.id) : "", salary: "", bankName: "", bankAccount: "", pan: "", uan: "" });
   }
 
   function openAddModal() {
     const dept = departments[0] || "";
     const deptDesignations = designations[dept] || [];
     const defaultShift = shifts.find((s) => s.is_default);
-    setForm({ name: "", email: "", department: dept, designation: deptDesignations[0] || "", location: locations[0] || "", shiftId: defaultShift ? String(defaultShift.id) : "" });
+    setForm({ name: "", email: "", department: dept, designation: deptDesignations[0] || "", location: locations[0] || "", shiftId: defaultShift ? String(defaultShift.id) : "", salary: "", bankName: "", bankAccount: "", pan: "", uan: "" });
     setShowModal(true);
   }
 
@@ -180,6 +184,34 @@ export default function EmployeeListPage() {
                 return <option key={s.id} value={s.id}>{s.name} ({fmt(s.start_time)} - {fmt(s.end_time)})</option>;
               })}
             </select>
+          </div>
+
+          <div style={{ borderTop: "1px solid var(--gray-200)", margin: "16px 0", paddingTop: 16 }}>
+            <h4 style={{ fontSize: "0.85rem", color: "var(--gray-600)", marginBottom: 12 }}>Salary & Bank Details</h4>
+          </div>
+          <div className="form-group">
+            <label>Monthly CTC (₹)</label>
+            <input type="number" min="0" value={form.salary} onChange={(e) => setForm({ ...form, salary: e.target.value })} placeholder="e.g. 50000" required />
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <div className="form-group">
+              <label>Bank Name</label>
+              <input type="text" value={form.bankName} onChange={(e) => setForm({ ...form, bankName: e.target.value })} placeholder="e.g. HDFC Bank" />
+            </div>
+            <div className="form-group">
+              <label>Bank Account Number</label>
+              <input type="text" value={form.bankAccount} onChange={(e) => setForm({ ...form, bankAccount: e.target.value })} placeholder="Account number" />
+            </div>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <div className="form-group">
+              <label>PAN Number</label>
+              <input type="text" value={form.pan} onChange={(e) => setForm({ ...form, pan: e.target.value.toUpperCase() })} placeholder="e.g. ABCDE1234F" maxLength={10} />
+            </div>
+            <div className="form-group">
+              <label>UAN Number</label>
+              <input type="text" value={form.uan} onChange={(e) => setForm({ ...form, uan: e.target.value })} placeholder="Universal Account Number" />
+            </div>
           </div>
           <div className="form-actions">
             <button type="button" className="btn btn-outline" onClick={() => setShowModal(false)}>Cancel</button>
