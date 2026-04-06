@@ -1,30 +1,35 @@
-import { useState } from "react";
 import { useClock } from "../../hooks/useClock";
+import { useAuth } from "../../context/AuthContext";
+import { useData } from "../../context/DataContext";
 
 export default function WelcomeBannerClock({ greeting, userName, today, pending, presentCount }) {
   const time = useClock();
-  const [clockedIn, setClockedIn] = useState(false);
-  const [clockInTime, setClockInTime] = useState(null);
-  const [clockOutTime, setClockOutTime] = useState(null);
+  const { user } = useAuth();
+  const { attendance, clockIn, clockOut } = useData();
 
-  function handleClockIn() {
-    setClockedIn(true);
-    setClockInTime(new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }));
-    setClockOutTime(null);
+  const todayStr = new Date().toISOString().split("T")[0];
+  const myAttendance = attendance.find((a) => a.employeeId === user?.id && a.date === todayStr);
+  const isClockedIn = myAttendance?.clockIn && !myAttendance?.clockOut;
+  const hasClockedOut = myAttendance?.clockIn && myAttendance?.clockOut;
+
+  async function handleClockIn() {
+    if (!user?.id) return;
+    await clockIn(user.id);
   }
 
-  function handleClockOut() {
-    setClockedIn(false);
-    setClockOutTime(new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }));
+  async function handleClockOut() {
+    if (!user?.id) return;
+    await clockOut(user.id);
   }
 
   function getElapsed() {
-    if (!clockInTime) return null;
+    if (!myAttendance?.clockIn) return null;
     const now = new Date();
-    const [h, m] = clockInTime.split(":").map(Number);
+    const [h, m] = myAttendance.clockIn.split(":").map(Number);
     const start = new Date();
     start.setHours(h, m, 0);
     const diff = Math.floor((now - start) / 60000);
+    if (diff < 0) return "0h 0m";
     return `${Math.floor(diff / 60)}h ${diff % 60}m`;
   }
 
@@ -47,19 +52,19 @@ export default function WelcomeBannerClock({ greeting, userName, today, pending,
         <div className="welcome-clock-time">{time}</div>
 
         <div className="welcome-clock-status">
-          {clockedIn ? (
+          {isClockedIn ? (
             <>
               <span className="welcome-clock-badge clocked-in">
                 <i className="fas fa-circle" /> Clocked In
               </span>
-              <span className="welcome-clock-detail">Since {clockInTime} ({getElapsed()})</span>
+              <span className="welcome-clock-detail">Since {myAttendance.clockIn} ({getElapsed()})</span>
             </>
-          ) : clockOutTime ? (
+          ) : hasClockedOut ? (
             <>
               <span className="welcome-clock-badge clocked-out">
                 <i className="fas fa-circle" /> Clocked Out
               </span>
-              <span className="welcome-clock-detail">In: {clockInTime} &middot; Out: {clockOutTime}</span>
+              <span className="welcome-clock-detail">In: {myAttendance.clockIn} &middot; Out: {myAttendance.clockOut}</span>
             </>
           ) : (
             <>
@@ -71,14 +76,18 @@ export default function WelcomeBannerClock({ greeting, userName, today, pending,
           )}
         </div>
 
-        {!clockedIn ? (
+        {!isClockedIn && !hasClockedOut ? (
           <button className="welcome-clock-btn clock-in" onClick={handleClockIn}>
             <i className="fas fa-sign-in-alt" /> Clock In
           </button>
-        ) : (
+        ) : isClockedIn ? (
           <button className="welcome-clock-btn clock-out" onClick={handleClockOut}>
             <i className="fas fa-sign-out-alt" /> Clock Out
           </button>
+        ) : (
+          <span className="welcome-clock-detail" style={{ marginTop: 8, opacity: 0.8 }}>
+            <i className="fas fa-check-double" /> Done for today
+          </span>
         )}
       </div>
 
