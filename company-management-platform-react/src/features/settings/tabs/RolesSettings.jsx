@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "../../../lib/supabase";
 
 const allModules = [
   { key: "dashboard", label: "Dashboard", icon: "fa-th-large" },
@@ -13,25 +14,6 @@ const allModules = [
 
 const permissionLevels = ["none", "view", "manage", "full"];
 
-const defaultRoles = [
-  {
-    id: 1, name: "Super Admin", users: 1, color: "var(--danger)",
-    permissions: { dashboard: "full", employees: "full", attendance: "full", leave: "full", payroll: "full", settings: "full", announcements: "full", teams: "full" },
-  },
-  {
-    id: 2, name: "HR Manager", users: 1, color: "var(--primary)",
-    permissions: { dashboard: "full", employees: "manage", attendance: "manage", leave: "manage", payroll: "manage", settings: "manage", announcements: "manage", teams: "view" },
-  },
-  {
-    id: 3, name: "Manager", users: 3, color: "var(--success)",
-    permissions: { dashboard: "view", employees: "view", attendance: "view", leave: "manage", payroll: "none", settings: "none", announcements: "view", teams: "view" },
-  },
-  {
-    id: 4, name: "Employee", users: 7, color: "var(--gray-500)",
-    permissions: { dashboard: "view", employees: "none", attendance: "view", leave: "view", payroll: "none", settings: "none", announcements: "view", teams: "view" },
-  },
-];
-
 const colorOptions = [
   { label: "Red", value: "var(--danger)" },
   { label: "Blue", value: "var(--primary)" },
@@ -42,57 +24,46 @@ const colorOptions = [
 ];
 
 function getPermissionSummary(perms) {
+  if (!perms || typeof perms !== "object") return "No permissions set";
   const full = Object.values(perms).filter((v) => v === "full").length;
   const manage = Object.values(perms).filter((v) => v === "manage").length;
   const view = Object.values(perms).filter((v) => v === "view").length;
-  const parts = [];
   if (full === allModules.length) return "Full access to all modules";
+  const parts = [];
   if (full > 0) parts.push(`${full} full access`);
   if (manage > 0) parts.push(`${manage} manage`);
   if (view > 0) parts.push(`${view} view only`);
   return parts.join(", ") || "No access";
 }
 
-function PermissionBadge({ level }) {
-  const styles = {
-    full: { background: "var(--success-bg)", color: "var(--success)" },
-    manage: { background: "var(--primary-bg)", color: "var(--primary)" },
-    view: { background: "var(--warning-bg)", color: "var(--warning)" },
-    none: { background: "var(--gray-100)", color: "var(--gray-400)" },
-  };
-  const labels = { full: "Full Access", manage: "Manage", view: "View Only", none: "No Access" };
-  return (
-    <span style={{ ...styles[level], padding: "3px 10px", borderRadius: 6, fontSize: "0.72rem", fontWeight: 600 }}>
-      {labels[level]}
-    </span>
-  );
-}
-
 export default function RolesSettings() {
-  const [roles, setRoles] = useState(defaultRoles);
+  const [roles, setRoles] = useState([]);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(null);
   const [showAdd, setShowAdd] = useState(false);
   const [addForm, setAddForm] = useState(null);
 
+  useEffect(() => { fetchRoles(); }, []);
+
+  async function fetchRoles() {
+    const { data } = await supabase.from("roles").select("*").order("id");
+    if (data) setRoles(data);
+  }
+
   function startEdit(role) {
     setEditing(role.id);
-    setForm({ ...role, permissions: { ...role.permissions } });
+    setForm({ ...role, permissions: role.permissions || {} });
   }
 
-  function cancelEdit() {
-    setEditing(null);
-    setForm(null);
+  async function saveEdit() {
+    await supabase.from("roles").update({ name: form.name, color: form.color, permissions: form.permissions }).eq("id", editing);
+    setEditing(null); setForm(null);
+    fetchRoles();
   }
 
-  function saveEdit() {
-    setRoles(roles.map((r) => (r.id === editing ? { ...form } : r)));
-    setEditing(null);
-    setForm(null);
-  }
-
-  function deleteRole(id) {
-    setRoles(roles.filter((r) => r.id !== id));
+  async function deleteRole(id) {
+    await supabase.from("roles").delete().eq("id", id);
+    fetchRoles();
   }
 
   function openAdd() {
@@ -102,12 +73,11 @@ export default function RolesSettings() {
     setShowAdd(true);
   }
 
-  function saveAdd() {
+  async function saveAdd() {
     if (!addForm.name.trim()) return;
-    const newId = Math.max(...roles.map((r) => r.id), 0) + 1;
-    setRoles([...roles, { ...addForm, id: newId, users: 0 }]);
-    setShowAdd(false);
-    setAddForm(null);
+    await supabase.from("roles").insert({ name: addForm.name, color: addForm.color, permissions: addForm.permissions });
+    setShowAdd(false); setAddForm(null);
+    fetchRoles();
   }
 
   function setAllPermissions(formObj, setFormFn, level) {
@@ -134,14 +104,7 @@ export default function RolesSettings() {
                 <i className={`fas ${mod.icon}`} style={{ width: 18, color: "var(--gray-400)", fontSize: "0.85rem" }} />
                 <span style={{ fontSize: "0.85rem", fontWeight: 500 }}>{mod.label}</span>
               </div>
-              <select
-                value={formObj.permissions[mod.key]}
-                onChange={(e) => {
-                  const perms = { ...formObj.permissions, [mod.key]: e.target.value };
-                  setFormFn({ ...formObj, permissions: perms });
-                }}
-                style={{ padding: "5px 10px", borderRadius: 6, border: "1px solid var(--gray-300)", fontSize: "0.8rem", fontFamily: "inherit", minWidth: 130 }}
-              >
+              <select value={formObj.permissions?.[mod.key] || "none"} onChange={(e) => { const perms = { ...formObj.permissions, [mod.key]: e.target.value }; setFormFn({ ...formObj, permissions: perms }); }} style={{ padding: "5px 10px", borderRadius: 6, border: "1px solid var(--gray-300)", fontSize: "0.8rem", fontFamily: "inherit", minWidth: 130 }}>
                 <option value="none">No Access</option>
                 <option value="view">View Only</option>
                 <option value="manage">Manage</option>
@@ -154,6 +117,28 @@ export default function RolesSettings() {
     );
   }
 
+  function renderModal(formObj, setFormFn, onSave, onCancel, title, submitLabel) {
+    return (
+      <div className="modal-overlay" onClick={onCancel}>
+        <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 580 }}>
+          <h3>{title}</h3>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+            <div className="form-group"><label>Role Name</label><input type="text" value={formObj.name} onChange={(e) => setFormFn({ ...formObj, name: e.target.value })} /></div>
+            <div className="form-group"><label>Color</label><select value={formObj.color} onChange={(e) => setFormFn({ ...formObj, color: e.target.value })}>{colorOptions.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}</select></div>
+          </div>
+          <div className="form-group">
+            <label style={{ marginBottom: 12 }}>Module Permissions</label>
+            {renderPermissionEditor(formObj, setFormFn)}
+          </div>
+          <div className="flex gap-2" style={{ justifyContent: "flex-end", marginTop: 20 }}>
+            <button className="btn btn-outline btn-sm" onClick={onCancel}>Cancel</button>
+            <button className="btn btn-primary btn-sm" onClick={onSave}>{submitLabel}</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="card">
@@ -163,14 +148,7 @@ export default function RolesSettings() {
         </div>
         <div className="table-container">
           <table>
-            <thead>
-              <tr>
-                <th>Role</th>
-                <th>Users</th>
-                <th>Permissions</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
+            <thead><tr><th>Role</th><th>Permissions</th><th>Actions</th></tr></thead>
             <tbody>
               {roles.map((r) => (
                 <tr key={r.id}>
@@ -180,18 +158,11 @@ export default function RolesSettings() {
                       <strong>{r.name}</strong>
                     </div>
                   </td>
-                  <td>{r.users}</td>
                   <td className="text-sm text-muted">{getPermissionSummary(r.permissions)}</td>
                   <td>
                     <div className="flex gap-1">
-                      <button className="btn btn-outline btn-sm" onClick={() => startEdit(r)}>
-                        <i className="fas fa-edit" />
-                      </button>
-                      {r.name !== "Super Admin" && (
-                        <button className="btn btn-outline btn-sm" style={{ color: "var(--danger)", borderColor: "var(--danger)" }} onClick={() => deleteRole(r.id)}>
-                          <i className="fas fa-trash" />
-                        </button>
-                      )}
+                      <button className="btn btn-outline btn-sm" onClick={() => startEdit(r)}><i className="fas fa-edit" /></button>
+                      {r.name !== "Super Admin" && <button className="btn btn-outline btn-sm" style={{ color: "var(--danger)", borderColor: "var(--danger)" }} onClick={() => deleteRole(r.id)}><i className="fas fa-trash" /></button>}
                     </div>
                   </td>
                 </tr>
@@ -200,68 +171,8 @@ export default function RolesSettings() {
           </table>
         </div>
       </div>
-
-      {/* Edit Role Modal */}
-      {editing && form && (
-        <div className="modal-overlay" onClick={cancelEdit}>
-          <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 580 }}>
-            <h3><i className="fas fa-shield-alt" style={{ marginRight: 8, color: "var(--primary)" }} />Edit Role - {form.name}</h3>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-              <div className="form-group">
-                <label>Role Name</label>
-                <input type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-              </div>
-              <div className="form-group">
-                <label>Color</label>
-                <select value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })}>
-                  {colorOptions.map((c) => (
-                    <option key={c.value} value={c.value}>{c.label}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            <div className="form-group">
-              <label style={{ marginBottom: 12 }}>Module Permissions</label>
-              {renderPermissionEditor(form, setForm)}
-            </div>
-            <div className="flex gap-2" style={{ justifyContent: "flex-end", marginTop: 20 }}>
-              <button className="btn btn-outline btn-sm" onClick={cancelEdit}>Cancel</button>
-              <button className="btn btn-primary btn-sm" onClick={saveEdit}>Save Changes</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Add Role Modal */}
-      {showAdd && addForm && (
-        <div className="modal-overlay" onClick={() => { setShowAdd(false); setAddForm(null); }}>
-          <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 580 }}>
-            <h3><i className="fas fa-plus-circle" style={{ marginRight: 8, color: "var(--success)" }} />Add New Role</h3>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-              <div className="form-group">
-                <label>Role Name</label>
-                <input type="text" value={addForm.name} onChange={(e) => setAddForm({ ...addForm, name: e.target.value })} placeholder="e.g. Team Lead" />
-              </div>
-              <div className="form-group">
-                <label>Color</label>
-                <select value={addForm.color} onChange={(e) => setAddForm({ ...addForm, color: e.target.value })}>
-                  {colorOptions.map((c) => (
-                    <option key={c.value} value={c.value}>{c.label}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            <div className="form-group">
-              <label style={{ marginBottom: 12 }}>Module Permissions</label>
-              {renderPermissionEditor(addForm, setAddForm)}
-            </div>
-            <div className="flex gap-2" style={{ justifyContent: "flex-end", marginTop: 20 }}>
-              <button className="btn btn-outline btn-sm" onClick={() => { setShowAdd(false); setAddForm(null); }}>Cancel</button>
-              <button className="btn btn-primary btn-sm" onClick={saveAdd} disabled={!addForm.name.trim()}>Add Role</button>
-            </div>
-          </div>
-        </div>
-      )}
+      {editing && form && renderModal(form, setForm, saveEdit, () => { setEditing(null); setForm(null); }, `Edit Role - ${form.name}`, "Save Changes")}
+      {showAdd && addForm && renderModal(addForm, setAddForm, saveAdd, () => { setShowAdd(false); setAddForm(null); }, "Add New Role", "Add Role")}
     </>
   );
 }
