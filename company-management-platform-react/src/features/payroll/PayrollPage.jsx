@@ -5,20 +5,112 @@ import Badge from "../../components/ui/Badge";
 import { useData } from "../../context/DataContext";
 import { formatCurrency, formatDate, numberToWords } from "../../utils/helpers";
 import copanLogo from "../../assets/images/copan-logo.png";
+import { supabase } from "../../lib/supabase";
+
+function buildPayrollEntry(emp, month, year) {
+  const ctc = Number(emp.salary) || 0;
+  const basic = Math.round(ctc * 0.50);
+  const hra = Math.round(basic * 0.40);
+  const pfEmployer = Math.round(Math.min(basic, 15000) * 0.12);
+  const specialAllowance = Math.max(0, ctc - basic - hra - pfEmployer);
+  const conveyance = 1600, medical = 1250;
+  const grossEarnings = basic + hra + specialAllowance + conveyance + medical;
+  const pfEmployee = Math.round(Math.min(basic, 15000) * 0.12);
+  const totalWorkingDays = 22;
+  const annualTaxable = (grossEarnings - pfEmployee) * 12 - 75000;
+  let tax = 0, rem = Math.max(0, annualTaxable);
+  for (const [limit, rate] of [[400000,0],[400000,0.05],[400000,0.10],[400000,0.15],[400000,0.20],[Infinity,0.30]]) {
+    if (rem <= 0) break; tax += Math.min(rem, limit) * rate; rem -= limit;
+  }
+  const tds = Math.round((tax + tax * 0.04) / 12);
+  const totalDeductions = pfEmployee + 200 + tds;
+  return {
+    employeeId: emp.id, month: `${month} ${year}`, year,
+    totalCalendarDays: 30, weekends: 8, holidays: 1, totalWorkingDays,
+    presentDays: totalWorkingDays, paidLeaveDays: 0, unpaidLeaveDays: 0,
+    lateDays: 0, lateDeductionDays: 0, halfDays: 0, payableDays: totalWorkingDays,
+    ctc, basic, hra, specialAllowance, conveyance, medical,
+    grossEarnings, pfEmployee, pfEmployer, professionalTax: 200, tds,
+    lopDeduction: 0, totalDeductions,
+    netPay: Math.round(grossEarnings - totalDeductions),
+    status: "draft",
+    emp,
+  };
+}
 
 export default function PayrollPage() {
   const { payroll: PAYROLL_DATA, employees: EMPLOYEES_DATA } = useData();
   const [selectedPayslip, setSelectedPayslip] = useState(null);
+  const [processing, setProcessing] = useState(false);
 
-  const totalGross = PAYROLL_DATA.reduce((s, p) => s + p.grossEarnings, 0);
-  const totalDeductions = PAYROLL_DATA.reduce((s, p) => s + p.totalDeductions, 0);
-  const totalNet = PAYROLL_DATA.reduce((s, p) => s + p.netPay, 0);
-  const totalTDS = PAYROLL_DATA.reduce((s, p) => s + p.tds, 0);
-  const totalLOP = PAYROLL_DATA.reduce((s, p) => s + p.lopDeduction, 0);
+  const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  const now = new Date();
+  const currentMonth = months[now.getMonth()];
+  const currentYear = now.getFullYear();
+  const [selectedMonth, setSelectedMonth] = useState(currentMonth);
+  const [selectedYear] = useState(currentYear);
+
+  // Use existing payroll data or generate from employees
+  const payrollForMonth = PAYROLL_DATA.filter((p) => p.month === `${selectedMonth} ${selectedYear}`);
+  const displayData = payrollForMonth.length > 0
+    ? payrollForMonth
+    : EMPLOYEES_DATA.map((emp) => buildPayrollEntry(emp, selectedMonth, selectedYear));
+
+  const totalGross = displayData.reduce((s, p) => s + p.grossEarnings, 0);
+  const totalDeductions = displayData.reduce((s, p) => s + p.totalDeductions, 0);
+  const totalNet = displayData.reduce((s, p) => s + p.netPay, 0);
+  const totalTDS = displayData.reduce((s, p) => s + p.tds, 0);
+  const isProcessed = payrollForMonth.length > 0;
 
   function openPayslip(p) {
     const emp = p.emp || EMPLOYEES_DATA.find((e) => e.id === p.employeeId);
     setSelectedPayslip({ ...p, emp });
+  }
+
+  async function processPayroll() {
+    setProcessing(true);
+    try {
+      const entries = EMPLOYEES_DATA.map((emp) => {
+        const entry = buildPayrollEntry(emp, selectedMonth, selectedYear);
+        return {
+          employee_id: emp.id,
+          month: `${selectedMonth} ${selectedYear}`,
+          year: selectedYear,
+          total_calendar_days: entry.totalCalendarDays,
+          weekends: entry.weekends,
+          holidays: entry.holidays,
+          total_working_days: entry.totalWorkingDays,
+          present_days: entry.presentDays,
+          paid_leave_days: entry.paidLeaveDays,
+          unpaid_leave_days: entry.unpaidLeaveDays,
+          late_days: entry.lateDays,
+          late_deduction_days: entry.lateDeductionDays,
+          half_days: entry.halfDays,
+          payable_days: entry.payableDays,
+          ctc: entry.ctc,
+          basic: entry.basic,
+          hra: entry.hra,
+          special_allowance: entry.specialAllowance,
+          conveyance: entry.conveyance,
+          medical: entry.medical,
+          gross_earnings: entry.grossEarnings,
+          pf_employee: entry.pfEmployee,
+          pf_employer: entry.pfEmployer,
+          professional_tax: entry.professionalTax,
+          tds: entry.tds,
+          lop_deduction: entry.lopDeduction,
+          total_deductions: entry.totalDeductions,
+          net_pay: entry.netPay,
+          status: "processed",
+        };
+      });
+      await supabase.from("payroll").insert(entries);
+      alert("Payroll processed successfully!");
+      window.location.reload();
+    } catch (e) {
+      alert("Error processing payroll: " + e.message);
+    }
+    setProcessing(false);
   }
 
   return (
@@ -26,12 +118,12 @@ export default function PayrollPage() {
       <Header title="Payroll" />
       <div className="page-content">
         {/* Summary Cards */}
-        <div className="stats-grid" style={{ gridTemplateColumns: "repeat(5, 1fr)" }}>
+        <div className="stats-grid" style={{ gridTemplateColumns: "repeat(4, 1fr)" }}>
           <div className="stat-card">
             <div className="stat-info">
               <h3>Gross Pay</h3>
               <div className="stat-value" style={{ fontSize: "1.4rem" }}>{formatCurrency(totalGross)}</div>
-              <div className="stat-change">{PAYROLL_DATA.length} employees</div>
+              <div className="stat-change">{displayData.length} employees</div>
             </div>
             <div className="stat-icon blue"><i className="fas fa-coins" /></div>
           </div>
@@ -56,24 +148,24 @@ export default function PayrollPage() {
             </div>
             <div className="stat-icon orange"><i className="fas fa-file-invoice" /></div>
           </div>
-          <div className="stat-card">
-            <div className="stat-info">
-              <h3>Loss of Pay Deductions</h3>
-              <div className="stat-value" style={{ fontSize: "1.4rem", color: "var(--danger)" }}>{formatCurrency(totalLOP)}</div>
-            </div>
-            <div className="stat-icon red"><i className="fas fa-clock" /></div>
-          </div>
         </div>
 
         {/* Employee Payroll Table */}
         <div className="card">
           <div className="card-header">
-            <h2>Payroll Details - March 2026</h2>
+            <h2>Payroll - {selectedMonth} {selectedYear}</h2>
             <div className="flex gap-2">
-              <select className="filter-select">
-                <option>March 2026</option><option>February 2026</option><option>January 2026</option>
+              <select className="filter-select" value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)}>
+                {months.map((m) => <option key={m} value={m}>{m}</option>)}
               </select>
-              <button className="btn btn-outline btn-sm"><i className="fas fa-download" /> Export</button>
+              {!isProcessed && displayData.length > 0 && (
+                <button className="btn btn-primary btn-sm" onClick={processPayroll} disabled={processing}>
+                  <i className="fas fa-check-circle" /> {processing ? "Processing..." : "Process Payroll"}
+                </button>
+              )}
+              {isProcessed && (
+                <span className="badge badge-success" style={{ padding: "6px 12px" }}>Processed</span>
+              )}
             </div>
           </div>
           <div className="table-container">
@@ -81,10 +173,7 @@ export default function PayrollPage() {
               <thead>
                 <tr>
                   <th>Employee</th>
-                  <th>Working Days</th>
-                  <th>Present</th>
-                  <th>Late</th>
-                  <th>Loss of Pay</th>
+                  <th>CTC</th>
                   <th>Gross</th>
                   <th>Deductions</th>
                   <th>Net Pay</th>
@@ -93,41 +182,34 @@ export default function PayrollPage() {
                 </tr>
               </thead>
               <tbody>
-                {PAYROLL_DATA.map((p) => {
-                  const emp = EMPLOYEES_DATA.find((e) => e.id === p.employeeId);
-                  if (!emp) return null;
-                  return (
-                    <tr key={p.employeeId} className="clickable-row" onClick={() => openPayslip(p)}>
-                      <td>
-                        <div className="employee-cell">
-                          <Avatar name={emp.name} initials={emp.avatar} avatarUrl={emp.avatarUrl} />
-                          <div><div className="name">{emp.name}</div><div className="sub">{emp.employeeId}</div></div>
-                        </div>
-                      </td>
-                      <td>{p.totalWorkingDays}</td>
-                      <td>{p.presentDays}</td>
-                      <td>
-                        {p.lateDays > 0 ? (
-                          <span className="badge badge-warning">{p.lateDays} late</span>
-                        ) : <span className="text-muted">0</span>}
-                      </td>
-                      <td>
-                        {p.unpaidLeaveDays > 0 ? (
-                          <span className="badge badge-danger">{p.unpaidLeaveDays} days</span>
-                        ) : <span className="text-muted">0</span>}
-                      </td>
-                      <td className="salary-cell">{formatCurrency(p.grossEarnings)}</td>
-                      <td className="salary-cell" style={{ color: "var(--danger)" }}>{formatCurrency(p.totalDeductions)}</td>
-                      <td className="salary-cell font-semibold">{formatCurrency(p.netPay)}</td>
-                      <td><Badge status={p.status} /></td>
-                      <td>
-                        <button className="btn btn-outline btn-sm" onClick={(e) => { e.stopPropagation(); openPayslip(p); }}>
-                          <i className="fas fa-eye" />
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
+                {displayData.length === 0 ? (
+                  <tr><td colSpan={7} style={{ textAlign: "center", color: "var(--gray-400)", padding: 32 }}>No employees found. Add employees first.</td></tr>
+                ) : (
+                  displayData.map((p) => {
+                    const emp = p.emp || EMPLOYEES_DATA.find((e) => e.id === p.employeeId);
+                    if (!emp) return null;
+                    return (
+                      <tr key={p.employeeId} className="clickable-row" onClick={() => openPayslip(p)}>
+                        <td>
+                          <div className="employee-cell">
+                            <Avatar name={emp.name} initials={emp.avatar} avatarUrl={emp.avatarUrl} />
+                            <div><div className="name">{emp.name}</div><div className="sub">{emp.employeeId}</div></div>
+                          </div>
+                        </td>
+                        <td className="salary-cell">{formatCurrency(p.ctc)}</td>
+                        <td className="salary-cell">{formatCurrency(p.grossEarnings)}</td>
+                        <td className="salary-cell" style={{ color: "var(--danger)" }}>{formatCurrency(p.totalDeductions)}</td>
+                        <td className="salary-cell font-semibold">{formatCurrency(p.netPay)}</td>
+                        <td><Badge status={p.status === "processed" || p.status === "paid" ? "paid" : "pending"} /></td>
+                        <td>
+                          <button className="btn btn-outline btn-sm" onClick={(e) => { e.stopPropagation(); openPayslip(p); }}>
+                            <i className="fas fa-eye" />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
               </tbody>
             </table>
           </div>
@@ -148,38 +230,34 @@ export default function PayrollPage() {
 
 function PayslipDetail({ data, onClose }) {
   const { emp } = data;
-  const pfAccountNo = `PYBNG00631020000${emp.id.toString().padStart(3, "0")}28 JXOPE1760A`;
+  if (!emp) return null;
+  const pfAccountNo = `PYBNG00631020000${(emp.id || 0).toString().padStart(3, "0")}28 JXOPE1760A`;
 
   return (
     <div className="payslip-doc">
-      {/* Close Button */}
       <button className="payslip-doc-close" onClick={onClose}><i className="fas fa-times" /></button>
 
-      {/* Document Header */}
       <div className="payslip-doc-header">
         <div>
-          <h1 className="payslip-doc-title">PAYSLIP <span>{data.month.toUpperCase()}</span></h1>
+          <h1 className="payslip-doc-title">PAYSLIP <span>{data.month?.toUpperCase()}</span></h1>
           <p className="payslip-doc-company">COPAN SERVICES PRIVATE LIMITED</p>
           <p className="payslip-doc-address">FLAT NUMBER 5, 3RD FLOOR, HIBISCUS PARK</p>
           <p className="payslip-doc-address">SECTOR 25</p>
           <p className="payslip-doc-address">Panchkula, Haryana 134116</p>
         </div>
-        <div className="payslip-doc-logo">
-          <img src={copanLogo} alt="Copan" />
-        </div>
+        <div className="payslip-doc-logo"><img src={copanLogo} alt="Copan" /></div>
       </div>
 
       <div className="payslip-doc-divider" />
 
-      {/* Employee Info */}
-      <h3 className="payslip-doc-emp-name">{emp.name.toUpperCase()}</h3>
+      <h3 className="payslip-doc-emp-name">{emp.name?.toUpperCase()}</h3>
       <table className="payslip-doc-info-table">
         <tbody>
           <tr>
             <td className="payslip-doc-info-label">Employee ID</td>
             <td className="payslip-doc-info-value">{emp.employeeId}</td>
             <td className="payslip-doc-info-label">Date of Joining</td>
-            <td className="payslip-doc-info-value">{formatDate(emp.joinDate)}</td>
+            <td className="payslip-doc-info-value">{emp.joinDate ? formatDate(emp.joinDate) : "—"}</td>
             <td className="payslip-doc-info-label">Department</td>
             <td className="payslip-doc-info-value">{emp.department}</td>
           </tr>
@@ -187,53 +265,31 @@ function PayslipDetail({ data, onClose }) {
             <td className="payslip-doc-info-label">Designation</td>
             <td className="payslip-doc-info-value">{emp.designation}</td>
             <td className="payslip-doc-info-label">Bank Account Number</td>
-            <td className="payslip-doc-info-value">{emp.bankAccount}</td>
+            <td className="payslip-doc-info-value">{emp.bankAccount || "—"}</td>
             <td className="payslip-doc-info-label">Location</td>
             <td className="payslip-doc-info-value">{emp.location}</td>
           </tr>
           <tr>
             <td className="payslip-doc-info-label">Payment Mode</td>
-            <td className="payslip-doc-info-value">{emp.paymentMode}</td>
+            <td className="payslip-doc-info-value">{emp.paymentMode || "Bank Transfer"}</td>
             <td className="payslip-doc-info-label">Bank Name</td>
-            <td className="payslip-doc-info-value">{emp.bankName}</td>
+            <td className="payslip-doc-info-value">{emp.bankName || "—"}</td>
             <td className="payslip-doc-info-label">Permanent Account Number</td>
-            <td className="payslip-doc-info-value">{emp.pan}</td>
-          </tr>
-          <tr>
-            <td className="payslip-doc-info-label">Universal Account Number</td>
-            <td className="payslip-doc-info-value">{emp.uan}</td>
-            <td className="payslip-doc-info-label">Provident Fund Account Number</td>
-            <td className="payslip-doc-info-value" colSpan="3">{pfAccountNo}</td>
+            <td className="payslip-doc-info-value">{emp.pan || "—"}</td>
           </tr>
         </tbody>
       </table>
 
       <div className="payslip-doc-divider" />
 
-      {/* Salary Details */}
       <h4 className="payslip-doc-section-title">SALARY DETAILS</h4>
       <table className="payslip-doc-salary-summary">
-        <thead>
-          <tr>
-            <th>Number of Payable Days</th>
-            <th>Gross Working Days</th>
-            <th>Loss of Pay Days</th>
-            <th>Days Payable</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>{data.totalWorkingDays}.0</td>
-            <td>{data.totalWorkingDays}.0</td>
-            <td>{data.unpaidLeaveDays > 0 ? data.unpaidLeaveDays.toFixed(2) : "0.00"}</td>
-            <td>{data.payableDays}</td>
-          </tr>
-        </tbody>
+        <thead><tr><th>Number of Payable Days</th><th>Gross Working Days</th><th>Loss of Pay Days</th><th>Days Payable</th></tr></thead>
+        <tbody><tr><td>{data.totalWorkingDays}.0</td><td>{data.totalWorkingDays}.0</td><td>{data.unpaidLeaveDays > 0 ? Number(data.unpaidLeaveDays).toFixed(2) : "0.00"}</td><td>{data.payableDays}</td></tr></tbody>
       </table>
 
       <div className="payslip-doc-divider" />
 
-      {/* Earnings & Contributions side by side */}
       <div className="payslip-doc-breakdown">
         <div className="payslip-doc-earnings">
           <h4 className="payslip-doc-col-title">EARNINGS</h4>
@@ -244,10 +300,7 @@ function PayslipDetail({ data, onClose }) {
               <tr><td>Medical Allowance</td><td className="payslip-doc-amount">{formatCurrency(data.medical)}</td></tr>
               <tr><td>Special Allowance</td><td className="payslip-doc-amount">{formatCurrency(data.specialAllowance)}</td></tr>
               <tr><td>Transport Allowance</td><td className="payslip-doc-amount">{formatCurrency(data.conveyance)}</td></tr>
-              <tr className="payslip-doc-total-row">
-                <td><strong>Total Earnings (A)</strong></td>
-                <td className="payslip-doc-amount"><strong>{formatCurrency(data.grossEarnings)}</strong></td>
-              </tr>
+              <tr className="payslip-doc-total-row"><td><strong>Total Earnings (A)</strong></td><td className="payslip-doc-amount"><strong>{formatCurrency(data.grossEarnings)}</strong></td></tr>
             </tbody>
           </table>
         </div>
@@ -257,10 +310,7 @@ function PayslipDetail({ data, onClose }) {
             <tbody>
               <tr><td>Provident Fund - Employee</td><td className="payslip-doc-amount">{formatCurrency(data.pfEmployee)}</td></tr>
               <tr><td>Provident Fund - Employer</td><td className="payslip-doc-amount">{formatCurrency(data.pfEmployer)}</td></tr>
-              <tr className="payslip-doc-total-row">
-                <td><strong>Total Contributions (B)</strong></td>
-                <td className="payslip-doc-amount"><strong>{formatCurrency(data.pfEmployee + data.pfEmployer)}</strong></td>
-              </tr>
+              <tr className="payslip-doc-total-row"><td><strong>Total Contributions (B)</strong></td><td className="payslip-doc-amount"><strong>{formatCurrency(data.pfEmployee + data.pfEmployer)}</strong></td></tr>
             </tbody>
           </table>
         </div>
@@ -268,29 +318,17 @@ function PayslipDetail({ data, onClose }) {
 
       <div className="payslip-doc-divider" />
 
-      {/* Net Salary */}
       <table className="payslip-doc-net-table">
         <tbody>
-          <tr>
-            <td className="payslip-doc-net-label">Net Salary Payable ( A - B )</td>
-            <td className="payslip-doc-net-value">{formatCurrency(data.netPay)}</td>
-          </tr>
-          <tr>
-            <td className="payslip-doc-net-label">Net Salary in words</td>
-            <td className="payslip-doc-net-words">{numberToWords(data.netPay)}</td>
-          </tr>
+          <tr><td className="payslip-doc-net-label">Net Salary Payable ( A - B )</td><td className="payslip-doc-net-value">{formatCurrency(data.netPay)}</td></tr>
+          <tr><td className="payslip-doc-net-label">Net Salary in words</td><td className="payslip-doc-net-words">{numberToWords(data.netPay)}</td></tr>
         </tbody>
       </table>
 
       <div className="payslip-doc-divider" />
 
-      {/* Note */}
-      <p className="payslip-doc-note">
-        <strong>*Note -</strong> All amounts displayed in this payslip are in <strong>Indian Rupees (INR)</strong>
-      </p>
-      <p className="payslip-doc-disclaimer">
-        * This is a computer generated statement does not require signature.
-      </p>
+      <p className="payslip-doc-note"><strong>*Note -</strong> All amounts displayed in this payslip are in <strong>Indian Rupees (INR)</strong></p>
+      <p className="payslip-doc-disclaimer">* This is a computer generated statement does not require signature.</p>
     </div>
   );
 }
