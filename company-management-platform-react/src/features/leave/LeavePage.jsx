@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Header from "../../components/layout/Header";
 import Avatar from "../../components/ui/Avatar";
 import Badge from "../../components/ui/Badge";
@@ -6,19 +6,24 @@ import Modal from "../../components/ui/Modal";
 import { useAuth } from "../../context/AuthContext";
 import { useData } from "../../context/DataContext";
 import { formatDate } from "../../utils/helpers";
+import { supabase } from "../../lib/supabase";
 
 export default function LeavePage() {
   const { user: CURRENT_USER, canApproveLeave } = useAuth();
-  const { leaveRequests, leaveBalances, employees, addLeaveRequest, updateLeaveStatus } = useData();
+  const { leaveRequests, employees, addLeaveRequest, updateLeaveStatus } = useData();
   const [tab, setTab] = useState("all");
   const [showModal, setShowModal] = useState(false);
-  const [form, setForm] = useState({ type: "Casual Leave", from: "", to: "", reason: "" });
+  const [form, setForm] = useState({ type: "", from: "", to: "", reason: "" });
+  const [leaveTypes, setLeaveTypes] = useState([]);
 
-  const userLeave = leaveBalances.filter((l) => l.employeeId === CURRENT_USER.id);
-  const casualBal = userLeave.find((l) => l.type === "Casual Leave")?.balance ?? 10;
-  const sickBal = userLeave.find((l) => l.type === "Sick Leave")?.balance ?? 7;
-  const earnedBal = userLeave.find((l) => l.type === "Earned Leave")?.balance ?? 15;
-  const compOffBal = userLeave.find((l) => l.type === "Comp Off")?.balance ?? 2;
+  useEffect(() => {
+    supabase.from("leave_policies").select("id, type").order("id").then(({ data }) => {
+      if (data) {
+        setLeaveTypes(data);
+        if (data.length > 0) setForm((f) => ({ ...f, type: data[0].type }));
+      }
+    });
+  }, []);
 
   const filtered = tab === "all" ? leaveRequests : leaveRequests.filter((l) => l.status === tab);
 
@@ -32,32 +37,20 @@ export default function LeavePage() {
     await addLeaveRequest({
       employeeId: CURRENT_USER.id,
       employeeName: CURRENT_USER.name,
-      ...form,
+      type: form.type,
+      from: form.from,
+      to: form.to,
       days,
+      reason: form.reason,
     });
     setShowModal(false);
-    setForm({ type: "Casual Leave", from: "", to: "", reason: "" });
+    setForm({ type: leaveTypes[0]?.type || "", from: "", to: "", reason: "" });
   }
 
   return (
     <>
       <Header title="Leave Management" />
       <div className="page-content">
-        <div className="leave-balance-grid">
-          {[
-            { label: "Casual Leave", count: casualBal, total: 12 },
-            { label: "Sick Leave", count: sickBal, total: 7 },
-            { label: "Earned Leave", count: earnedBal, total: 18 },
-            { label: "Comp Off", count: compOffBal, total: null },
-          ].map((b) => (
-            <div className="leave-balance-card" key={b.label}>
-              <div className="leave-type">{b.label}</div>
-              <div className="leave-count">{b.count}</div>
-              <div className="leave-total">{b.total ? `of ${b.total} remaining` : "available"}</div>
-            </div>
-          ))}
-        </div>
-
         <div className="card">
           <div className="card-header">
             <h2>Leave Requests</h2>
@@ -70,6 +63,11 @@ export default function LeavePage() {
             {["all", "pending", "approved", "rejected"].map((t) => (
               <button key={t} className={`tab ${tab === t ? "active" : ""}`} onClick={() => setTab(t)}>
                 {t.charAt(0).toUpperCase() + t.slice(1)}
+                {t === "pending" && leaveRequests.filter((l) => l.status === "pending").length > 0 && (
+                  <span style={{ marginLeft: 6, background: "var(--warning)", color: "#fff", borderRadius: 10, padding: "1px 7px", fontSize: "0.7rem" }}>
+                    {leaveRequests.filter((l) => l.status === "pending").length}
+                  </span>
+                )}
               </button>
             ))}
           </div>
@@ -78,33 +76,37 @@ export default function LeavePage() {
             <table>
               <thead><tr><th>Employee</th><th>Type</th><th>From</th><th>To</th><th>Days</th><th>Reason</th><th>Status</th><th>Actions</th></tr></thead>
               <tbody>
-                {filtered.map((l) => {
-                  const emp = employees.find((e) => e.id === l.employeeId);
-                  return (
-                    <tr key={l.id}>
-                      <td>
-                        <div className="employee-cell">
-                          <Avatar name={l.employeeName} initials={emp?.avatar || "?"} />
-                          <div><div className="name">{l.employeeName}</div></div>
-                        </div>
-                      </td>
-                      <td>{l.type}</td>
-                      <td>{formatDate(l.from)}</td>
-                      <td>{formatDate(l.to)}</td>
-                      <td>{l.days}</td>
-                      <td className="text-sm">{l.reason}</td>
-                      <td><Badge status={l.status} /></td>
-                      <td>
-                        {l.status === "pending" && canApproveLeave(l.employeeId) ? (
-                          <div className="leave-actions">
-                            <button className="btn-approve" onClick={() => handleAction(l.id, "approved")}>Approve</button>
-                            <button className="btn-reject" onClick={() => handleAction(l.id, "rejected")}>Reject</button>
+                {filtered.length === 0 ? (
+                  <tr><td colSpan={8} style={{ textAlign: "center", color: "var(--gray-400)", padding: 32 }}>No leave requests found</td></tr>
+                ) : (
+                  filtered.map((l) => {
+                    const emp = employees.find((e) => e.id === l.employeeId);
+                    return (
+                      <tr key={l.id}>
+                        <td>
+                          <div className="employee-cell">
+                            <Avatar name={l.employeeName || emp?.name || ""} initials={emp?.avatar || "?"} avatarUrl={emp?.avatarUrl} />
+                            <div><div className="name">{l.employeeName || emp?.name}</div></div>
                           </div>
-                        ) : "-"}
-                      </td>
-                    </tr>
-                  );
-                })}
+                        </td>
+                        <td>{l.type}</td>
+                        <td>{formatDate(l.from)}</td>
+                        <td>{formatDate(l.to)}</td>
+                        <td>{l.days}</td>
+                        <td className="text-sm">{l.reason}</td>
+                        <td><Badge status={l.status} /></td>
+                        <td>
+                          {l.status === "pending" && canApproveLeave(l.employeeId) ? (
+                            <div className="leave-actions">
+                              <button className="btn-approve" onClick={() => handleAction(l.id, "approved")}>Approve</button>
+                              <button className="btn-reject" onClick={() => handleAction(l.id, "rejected")}>Reject</button>
+                            </div>
+                          ) : "-"}
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
               </tbody>
             </table>
           </div>
@@ -116,7 +118,7 @@ export default function LeavePage() {
           <div className="form-group">
             <label>Leave Type</label>
             <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}>
-              {["Casual Leave", "Sick Leave", "Earned Leave", "Comp Off"].map((t) => <option key={t}>{t}</option>)}
+              {leaveTypes.map((t) => <option key={t.id} value={t.type}>{t.type}</option>)}
             </select>
           </div>
           <div className="form-group"><label>From Date</label><input type="date" value={form.from} onChange={(e) => setForm({ ...form, from: e.target.value })} required /></div>

@@ -380,20 +380,42 @@ export function DataProvider({ children }) {
   }
 
   async function addLeaveRequest(reqData) {
-    if (usingSupabase) {
+    try {
+      // Look up leave_policy_id by type name if not provided
+      let policyId = reqData.leavePolicyId;
+      if (!policyId && reqData.type) {
+        const { data: policy } = await supabase.from("leave_policies").select("id").eq("type", reqData.type).single();
+        policyId = policy?.id;
+      }
+
       const { data, error } = await supabase.from("leave_requests").insert({
         employee_id: reqData.employeeId,
-        leave_policy_id: reqData.leavePolicyId,
+        leave_policy_id: policyId,
         from_date: reqData.from,
         to_date: reqData.to,
         days: reqData.days,
         reason: reqData.reason,
-      }).select(`*, employee:employees(id, name, employee_id, avatar), leave_type:leave_policies(id, type)`).single();
+      }).select("*").single();
+
       if (error) throw error;
-      const req = transformLeaveRequest(data);
-      setLeaveRequests((prev) => [req, ...prev]);
-      return req;
-    } else {
+
+      const newReq = {
+        id: data.id,
+        employeeId: data.employee_id,
+        employeeName: reqData.employeeName || "",
+        type: reqData.type || "",
+        from: data.from_date,
+        to: data.to_date,
+        days: Number(data.days),
+        reason: data.reason,
+        status: data.status,
+        appliedOn: data.applied_on?.split("T")[0] || new Date().toISOString().split("T")[0],
+      };
+      setLeaveRequests((prev) => [newReq, ...prev]);
+      return newReq;
+    } catch (e) {
+      console.warn("Add leave request error:", e);
+      // Fallback to local
       const newReq = { id: Date.now(), ...reqData, status: "pending", appliedOn: new Date().toISOString().split("T")[0] };
       setLeaveRequests((prev) => [newReq, ...prev]);
       return newReq;
@@ -401,9 +423,10 @@ export function DataProvider({ children }) {
   }
 
   async function updateLeaveStatus(id, status) {
-    if (usingSupabase) {
-      const { error } = await supabase.from("leave_requests").update({ status, reviewed_at: new Date().toISOString() }).eq("id", id);
-      if (error) throw error;
+    try {
+      await supabase.from("leave_requests").update({ status, reviewed_at: new Date().toISOString() }).eq("id", id);
+    } catch (e) {
+      console.warn("Update leave status error:", e);
     }
     setLeaveRequests((prev) => prev.map((l) => (l.id === id ? { ...l, status } : l)));
   }
