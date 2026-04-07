@@ -44,6 +44,7 @@ function transformAttendance(row) {
     clockOut: row.clock_out,
     status: row.status,
     hours: row.hours ? Number(row.hours) : null,
+    workMode: row.work_mode || "office",
   };
 }
 
@@ -255,6 +256,7 @@ export function DataProvider({ children }) {
             employeeName: emp?.name || "", type: policyMap[row.leave_policy_id] || "",
             from: row.from_date, to: row.to_date, days: Number(row.days),
             reason: row.reason, status: row.status,
+            leaveMode: row.leave_mode || "full-day",
             appliedOn: row.applied_on?.split("T")[0] || "",
           };
         }));
@@ -454,6 +456,7 @@ export function DataProvider({ children }) {
         to_date: reqData.to,
         days: reqData.days,
         reason: reqData.reason,
+        leave_mode: reqData.leaveMode || "full-day",
       }).select("*").single();
 
       if (error) throw error;
@@ -468,6 +471,7 @@ export function DataProvider({ children }) {
         days: Number(data.days),
         reason: data.reason,
         status: data.status,
+        leaveMode: data.leave_mode || "full-day",
         appliedOn: data.applied_on?.split("T")[0] || new Date().toISOString().split("T")[0],
       };
       setLeaveRequests((prev) => [newReq, ...prev]);
@@ -562,7 +566,7 @@ export function DataProvider({ children }) {
     setTeams((prev) => prev.filter((t) => t.id !== id));
   }
 
-  async function clockIn(employeeId) {
+  async function clockIn(employeeId, workMode = "office") {
     const today = new Date().toISOString().split("T")[0];
     const now = new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
     try {
@@ -572,10 +576,9 @@ export function DataProvider({ children }) {
       let result;
       if (existing) {
         // Update existing record
-        result = await supabase.from("attendance").update({ clock_in: now, status: "present" }).eq("id", existing.id).select().single();
+        result = await supabase.from("attendance").update({ clock_in: now, status: "present", work_mode: workMode }).eq("id", existing.id).select().single();
       } else {
-        // Insert new record
-        result = await supabase.from("attendance").insert({ employee_id: employeeId, date: today, clock_in: now, status: "present" }).select().single();
+        result = await supabase.from("attendance").insert({ employee_id: employeeId, date: today, clock_in: now, status: "present", work_mode: workMode }).select().single();
       }
 
       if (result.data) {

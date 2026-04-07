@@ -34,10 +34,10 @@ export default function AttendancePage() {
   const isClockedIn = myAttendance && myAttendance.clockIn && !myAttendance.clockOut;
   const hasClockedOut = myAttendance && myAttendance.clockOut;
 
-  async function handleClockIn() {
+  async function handleClockIn(workMode) {
     if (!user?.id) return;
-    const t = await clockIn(user.id);
-    alert("Clocked in at " + t);
+    const t = await clockIn(user.id, workMode);
+    alert(`Clocked in at ${t}${workMode === "wfh" ? " (WFH)" : ""}`);
   }
 
   async function handleClockOut() {
@@ -67,7 +67,10 @@ export default function AttendancePage() {
           </div>
           <div className="clock-actions">
             {!myAttendance || (!myAttendance.clockIn) ? (
-              <button className="btn-clock btn-clock-in" onClick={handleClockIn}>Clock In</button>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button className="btn-clock btn-clock-in" onClick={() => handleClockIn("office")}><i className="fas fa-building" style={{ marginRight: 6 }} />Clock In (Office)</button>
+                <button className="btn-clock btn-clock-in" style={{ background: "var(--info)", color: "#fff" }} onClick={() => handleClockIn("wfh")}><i className="fas fa-home" style={{ marginRight: 6 }} />Clock In (WFH)</button>
+              </div>
             ) : isClockedIn ? (
               <>
                 <span style={{ fontSize: "0.82rem", color: "var(--success)", fontWeight: 600 }}>
