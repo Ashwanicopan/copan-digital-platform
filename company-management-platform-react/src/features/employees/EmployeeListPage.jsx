@@ -174,36 +174,40 @@ export default function EmployeeListPage() {
       {/* Stepper Modal */}
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 600, padding: 0, overflow: "hidden" }}>
-            {/* Header */}
-            <div style={{ padding: "20px 24px", borderBottom: "1px solid var(--gray-100)" }}>
-              <h3 style={{ margin: 0, fontSize: "1.1rem" }}>Add New Employee</h3>
+          <div className="modal stepper-modal" onClick={(e) => e.stopPropagation()}>
+            {/* Gradient Header */}
+            <div style={{ padding: "28px 32px 22px", background: "linear-gradient(135deg, var(--primary), #6366f1)", color: "#fff" }}>
+              <h3 style={{ color: "#fff", margin: "0 0 4px", fontSize: "1.25rem", fontWeight: 700 }}>Add New Employee</h3>
+              <p style={{ fontSize: "0.82rem", opacity: 0.75, margin: 0 }}>Step {step} of {steps.length} — {steps[step - 1].label}</p>
             </div>
 
-            {/* Stepper */}
-            <div style={{ display: "flex", padding: "16px 24px", background: "var(--gray-50)", borderBottom: "1px solid var(--gray-100)", gap: 4 }}>
+            {/* Stepper Track */}
+            <div style={{ display: "flex", padding: "18px 32px", background: "#fafbfc", borderBottom: "1px solid var(--gray-100)", gap: 4, alignItems: "center" }}>
               {steps.map((s, i) => (
-                <div key={s.id} style={{ flex: 1, display: "flex", alignItems: "center", gap: 8 }}>
+                <div key={s.id} style={{ flex: 1, display: "flex", alignItems: "center", gap: 10 }}>
                   <div style={{
-                    width: 28, height: 28, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.7rem", fontWeight: 700, flexShrink: 0,
-                    background: step > s.id ? "var(--success)" : step === s.id ? "var(--primary)" : "var(--gray-200)",
+                    width: 34, height: 34, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.75rem", fontWeight: 700, flexShrink: 0, transition: "all 0.3s",
+                    background: step > s.id ? "var(--success)" : step === s.id ? "var(--primary)" : "#e5e7eb",
                     color: step >= s.id ? "#fff" : "var(--gray-500)",
+                    boxShadow: step === s.id ? "0 0 0 4px rgba(79,70,229,0.15)" : "none",
                   }}>
-                    {step > s.id ? <i className="fas fa-check" /> : s.id}
+                    {step > s.id ? <i className="fas fa-check" style={{ fontSize: "0.7rem" }} /> : s.id}
                   </div>
-                  <div style={{ fontSize: "0.75rem", fontWeight: step === s.id ? 600 : 400, color: step === s.id ? "var(--primary)" : "var(--gray-500)", whiteSpace: "nowrap" }}>
-                    {s.label}
+                  <div style={{ display: "flex", flexDirection: "column" }}>
+                    <span style={{ fontSize: "0.7rem", fontWeight: step === s.id ? 700 : 500, color: step === s.id ? "var(--primary)" : step > s.id ? "var(--success)" : "var(--gray-400)", whiteSpace: "nowrap" }}>
+                      {s.label}
+                    </span>
                   </div>
-                  {i < steps.length - 1 && <div style={{ flex: 1, height: 2, background: step > s.id ? "var(--success)" : "var(--gray-200)", marginLeft: 4 }} />}
+                  {i < steps.length - 1 && <div style={{ flex: 1, height: 2, borderRadius: 2, background: step > s.id ? "var(--success)" : "#e5e7eb", marginLeft: 4, transition: "background 0.3s" }} />}
                 </div>
               ))}
             </div>
 
             {/* Step Content */}
-            <div style={{ padding: "24px" }}>
+            <div style={{ padding: "28px 32px", minHeight: 280 }}>
               {step === 1 && (
                 <>
-                  <p style={{ fontSize: "0.82rem", color: "var(--gray-500)", marginBottom: 16 }}>Enter the employee's personal information</p>
+                  <div style={{ fontSize: "0.82rem", color: "var(--gray-400)", marginBottom: 20, display: "flex", alignItems: "center", gap: 6 }}><i className="fas fa-info-circle" /> Enter the employee's personal information</div>
                   <div className="form-group">
                     <label>Full Name *</label>
                     <input type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Enter full name" required />
@@ -233,7 +237,7 @@ export default function EmployeeListPage() {
 
               {step === 2 && (
                 <>
-                  <p style={{ fontSize: "0.82rem", color: "var(--gray-500)", marginBottom: 16 }}>Set the employee's role and work details</p>
+                  <div style={{ fontSize: "0.82rem", color: "var(--gray-400)", marginBottom: 20, display: "flex", alignItems: "center", gap: 6 }}><i className="fas fa-info-circle" /> Set the employee's role and work details</div>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                     <div className="form-group">
                       <label>Department *</label>
@@ -279,7 +283,7 @@ export default function EmployeeListPage() {
 
               {step === 3 && (
                 <>
-                  <p style={{ fontSize: "0.82rem", color: "var(--gray-500)", marginBottom: 16 }}>Enter salary and banking details for payroll</p>
+                  <div style={{ fontSize: "0.82rem", color: "var(--gray-400)", marginBottom: 20, display: "flex", alignItems: "center", gap: 6 }}><i className="fas fa-info-circle" /> Enter salary and banking details for payroll</div>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                     <div className="form-group">
                       <label>Monthly CTC (₹) *</label>
@@ -319,27 +323,27 @@ export default function EmployeeListPage() {
 
               {step === 4 && (
                 <>
-                  <p style={{ fontSize: "0.82rem", color: "var(--gray-500)", marginBottom: 16 }}>Review all details before adding the employee</p>
+                  <div style={{ fontSize: "0.82rem", color: "var(--gray-400)", marginBottom: 20, display: "flex", alignItems: "center", gap: 6 }}><i className="fas fa-clipboard-check" /> Review all details before adding the employee</div>
                   {[
-                    { title: "Personal Details", icon: "fa-user", fields: [
+                    { title: "Personal Details", icon: "fa-user", color: "var(--primary)", fields: [
                       ["Name", form.name], ["Email", form.email], ["Phone", form.phone || "—"],
                       ["Date of Birth", form.dob || "—"], ["Date of Joining", form.joinDate],
                     ]},
-                    { title: "Employment Details", icon: "fa-briefcase", fields: [
+                    { title: "Employment Details", icon: "fa-briefcase", color: "var(--success)", fields: [
                       ["Department", form.department], ["Designation", form.designation], ["Location", form.location],
                       ["Shift", fmtShift(form.shiftId)], ["Reporting Manager", fmtManager(form.managerId)],
                     ]},
-                    { title: "Salary & Bank", icon: "fa-wallet", fields: [
+                    { title: "Salary & Bank", icon: "fa-wallet", color: "var(--warning)", fields: [
                       ["Monthly CTC", form.salary ? `₹${Number(form.salary).toLocaleString("en-IN")}` : "—"],
                       ["Payment Mode", form.paymentMode], ["Bank", form.bankName || "—"], ["Account", form.bankAccount || "—"],
                       ["PAN", form.pan || "—"], ["UAN", form.uan || "—"],
                     ]},
                   ].map((section) => (
-                    <div key={section.title} style={{ marginBottom: 16, padding: 16, background: "var(--gray-50)", borderRadius: "var(--radius)", border: "1px solid var(--gray-100)" }}>
-                      <div style={{ fontSize: "0.82rem", fontWeight: 600, color: "var(--gray-700)", marginBottom: 10 }}>
-                        <i className={`fas ${section.icon}`} style={{ marginRight: 6, color: "var(--primary)" }} />{section.title}
+                    <div key={section.title} style={{ marginBottom: 14, padding: "16px 18px", background: "#fafbfc", borderRadius: 12, border: "1px solid var(--gray-100)" }}>
+                      <div style={{ fontSize: "0.82rem", fontWeight: 700, color: "var(--gray-700)", marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}>
+                        <i className={`fas ${section.icon}`} style={{ color: section.color }} />{section.title}
                       </div>
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px 16px" }}>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px 20px" }}>
                         {section.fields.map(([label, value]) => (
                           <div key={label} style={{ fontSize: "0.8rem" }}>
                             <span style={{ color: "var(--gray-400)" }}>{label}: </span>
@@ -354,16 +358,17 @@ export default function EmployeeListPage() {
             </div>
 
             {/* Footer */}
-            <div style={{ display: "flex", justifyContent: "space-between", padding: "16px 24px", borderTop: "1px solid var(--gray-100)", background: "var(--gray-50)" }}>
-              <button className="btn btn-outline" onClick={() => step === 1 ? setShowModal(false) : setStep(step - 1)}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "18px 32px", borderTop: "1px solid var(--gray-100)", background: "#fafbfc" }}>
+              <button className="btn btn-outline" style={{ minWidth: 110, height: 40, borderRadius: 10, fontWeight: 600 }} onClick={() => step === 1 ? setShowModal(false) : setStep(step - 1)}>
                 {step === 1 ? "Cancel" : <><i className="fas fa-arrow-left" /> Back</>}
               </button>
+              <span style={{ fontSize: "0.75rem", color: "var(--gray-400)" }}>Step {step} of {steps.length}</span>
               {step < 4 ? (
-                <button className="btn btn-primary" onClick={() => setStep(step + 1)} disabled={!canGoNext()}>
+                <button className="btn btn-primary" style={{ minWidth: 110, height: 40, borderRadius: 10, fontWeight: 600 }} onClick={() => setStep(step + 1)} disabled={!canGoNext()}>
                   Next <i className="fas fa-arrow-right" />
                 </button>
               ) : (
-                <button className="btn btn-primary" onClick={handleAdd}>
+                <button className="btn btn-primary" style={{ minWidth: 140, height: 40, borderRadius: 10, fontWeight: 600 }} onClick={handleAdd}>
                   <i className="fas fa-user-plus" /> Add Employee
                 </button>
               )}
