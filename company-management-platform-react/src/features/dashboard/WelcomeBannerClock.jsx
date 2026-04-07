@@ -12,9 +12,9 @@ export default function WelcomeBannerClock({ greeting, userName, today, pending,
   const isClockedIn = myAttendance?.clockIn && !myAttendance?.clockOut;
   const hasClockedOut = myAttendance?.clockIn && myAttendance?.clockOut;
 
-  async function handleClockIn() {
+  async function handleClockIn(workMode = "office") {
     if (!user?.id) return;
-    await clockIn(user.id);
+    await clockIn(user.id, workMode);
   }
 
   async function handleClockOut() {
@@ -55,7 +55,7 @@ export default function WelcomeBannerClock({ greeting, userName, today, pending,
           {isClockedIn ? (
             <>
               <span className="welcome-clock-badge clocked-in">
-                <i className="fas fa-circle" /> Clocked In
+                <i className="fas fa-circle" /> Clocked In {myAttendance.workMode === "wfh" ? "(WFH)" : "(Office)"}
               </span>
               <span className="welcome-clock-detail">Since {myAttendance.clockIn} ({getElapsed()})</span>
             </>
@@ -77,9 +77,14 @@ export default function WelcomeBannerClock({ greeting, userName, today, pending,
         </div>
 
         {!isClockedIn && !hasClockedOut ? (
-          <button className="welcome-clock-btn clock-in" onClick={handleClockIn}>
-            <i className="fas fa-sign-in-alt" /> Clock In
-          </button>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button className="welcome-clock-btn clock-in" onClick={() => handleClockIn("office")}>
+              <i className="fas fa-building" /> Office
+            </button>
+            <button className="welcome-clock-btn clock-in" style={{ background: "rgba(255,255,255,0.15)", backdropFilter: "blur(4px)" }} onClick={() => handleClockIn("wfh")}>
+              <i className="fas fa-home" /> WFH
+            </button>
+          </div>
         ) : isClockedIn ? (
           <button className="welcome-clock-btn clock-out" onClick={handleClockOut}>
             <i className="fas fa-sign-out-alt" /> Clock Out
