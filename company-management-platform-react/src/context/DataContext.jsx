@@ -387,6 +387,56 @@ export function DataProvider({ children }) {
     }
   }
 
+  async function updateEmployee(id, updates) {
+    try {
+      // Look up department/location IDs if names provided
+      let deptId = updates.departmentId;
+      if (!deptId && updates.department) {
+        const { data: deptRow } = await supabase.from("departments").select("id").eq("name", updates.department).single();
+        deptId = deptRow?.id;
+      }
+      let locId = updates.locationId;
+      if (!locId && updates.location) {
+        const { data: locRow } = await supabase.from("locations").select("id").eq("name", updates.location).single();
+        locId = locRow?.id;
+      }
+      const dbUpdates = {};
+      if (updates.name !== undefined) dbUpdates.name = updates.name;
+      if (updates.email !== undefined) dbUpdates.email = updates.email;
+      if (updates.phone !== undefined) dbUpdates.phone = updates.phone;
+      if (updates.dob !== undefined) dbUpdates.dob = updates.dob || null;
+      if (updates.designation !== undefined) dbUpdates.designation = updates.designation;
+      if (updates.joinDate !== undefined) dbUpdates.join_date = updates.joinDate;
+      if (updates.managerId !== undefined) dbUpdates.manager_id = updates.managerId || null;
+      if (updates.salary !== undefined) dbUpdates.salary = updates.salary;
+      if (updates.paymentMode !== undefined) dbUpdates.payment_mode = updates.paymentMode;
+      if (updates.bankName !== undefined) dbUpdates.bank_name = updates.bankName || null;
+      if (updates.bankAccount !== undefined) dbUpdates.bank_account = updates.bankAccount || null;
+      if (updates.pan !== undefined) dbUpdates.pan = updates.pan || null;
+      if (updates.uan !== undefined) dbUpdates.uan = updates.uan || null;
+      if (updates.shiftId !== undefined) dbUpdates.shift_id = updates.shiftId || null;
+      if (updates.status !== undefined) dbUpdates.status = updates.status;
+      if (deptId) dbUpdates.department_id = deptId;
+      if (locId) dbUpdates.location_id = locId;
+
+      await supabase.from("employees").update(dbUpdates).eq("id", id);
+      setEmployees((prev) => prev.map((e) => e.id === id ? { ...e, ...updates, departmentId: deptId || e.departmentId, locationId: locId || e.locationId } : e));
+    } catch (e) {
+      console.warn("Update employee error:", e);
+    }
+  }
+
+  async function deleteEmployee(id) {
+    try {
+      await supabase.from("attendance").delete().eq("employee_id", id);
+      await supabase.from("leave_requests").delete().eq("employee_id", id);
+      await supabase.from("employees").delete().eq("id", id);
+      setEmployees((prev) => prev.filter((e) => e.id !== id));
+    } catch (e) {
+      console.warn("Delete employee error:", e);
+    }
+  }
+
   async function addLeaveRequest(reqData) {
     try {
       // Look up leave_policy_id by type name if not provided
@@ -588,6 +638,8 @@ export function DataProvider({ children }) {
     usingSupabase,
     // Actions
     addEmployee,
+    updateEmployee,
+    deleteEmployee,
     addLeaveRequest,
     updateLeaveStatus,
     addAnnouncement,
