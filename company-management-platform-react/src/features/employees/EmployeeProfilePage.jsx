@@ -104,7 +104,7 @@ export default function EmployeeProfilePage() {
           ))}
         </div>
 
-        {activeTab === "overview" && <OverviewTab emp={emp} payrollEntry={payrollEntry} />}
+        {activeTab === "overview" && <OverviewTab emp={emp} payrollEntry={payrollEntry} shifts={shifts} />}
         {activeTab === "attendance" && <AttendanceTab emp={emp} attendance={attendance} />}
         {activeTab === "leave" && <LeaveTab emp={emp} leaveRequests={leaveRequests} leaveBalances={leaveBalances} />}
         {activeTab === "performance" && <PerformanceTab emp={emp} attendance={attendance} />}
@@ -239,7 +239,13 @@ export default function EmployeeProfilePage() {
   );
 }
 
-function OverviewTab({ emp, payrollEntry }) {
+function OverviewTab({ emp, payrollEntry, shifts }) {
+  const empShift = (shifts || []).find((s) => s.id === emp.shiftId);
+  const fmtT = (t) => { if (!t) return ""; const [h,m] = t.split(":"); const hr = parseInt(h); return `${hr > 12 ? hr-12 : hr || 12}:${m} ${hr >= 12 ? "PM" : "AM"}`; };
+  const fmtBreak = (mins) => { if (!mins) return "No break"; if (mins < 60) return `${mins} min`; const h = Math.floor(mins / 60); const m = mins % 60; return m > 0 ? `${h}h ${m}m` : `${h}h`; };
+  const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const DAY_FULL = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+
   return (
     <>
       <div className="profile-details-grid">
@@ -255,6 +261,55 @@ function OverviewTab({ emp, payrollEntry }) {
             <div className="detail-item mb-4" key={l}><span className="detail-label">{l}</span><span className="detail-value">{v}</span></div>
           ))}
         </div>
+      </div>
+
+      {/* Shift Details */}
+      <div className="card" style={{ marginTop: 20 }}>
+        <div className="card-header"><h2><i className="fas fa-clock" style={{ marginRight: 8, color: "var(--primary)" }} />Shift Details</h2></div>
+        {empShift ? (
+          <div style={{ padding: "0 20px 20px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+              <span style={{ fontSize: "1.05rem", fontWeight: 700, color: "var(--gray-900)" }}>{empShift.name}</span>
+              {empShift.is_default && <span style={{ background: "var(--primary)", color: "#fff", padding: "2px 8px", borderRadius: 4, fontSize: "0.68rem", fontWeight: 600 }}>DEFAULT</span>}
+            </div>
+            <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 16 }}>
+              {[
+                ["Start Time", fmtT(empShift.start_time), "fa-sign-in-alt", "var(--success)"],
+                ["End Time", fmtT(empShift.end_time), "fa-sign-out-alt", "var(--danger)"],
+                ["Break", fmtBreak(empShift.break_minutes), "fa-coffee", "var(--warning)"],
+                ["Grace Period", `${empShift.grace_minutes} min`, "fa-hourglass-half", "var(--info)"],
+              ].map(([label, value, icon, color]) => (
+                <div key={label} style={{ flex: 1, minWidth: 130, padding: "14px 16px", background: "var(--gray-50)", borderRadius: 10, border: "1px solid var(--gray-100)" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+                    <i className={`fas ${icon}`} style={{ fontSize: "0.75rem", color }} />
+                    <span style={{ fontSize: "0.72rem", color: "var(--gray-500)" }}>{label}</span>
+                  </div>
+                  <div style={{ fontSize: "0.95rem", fontWeight: 600, color: "var(--gray-900)" }}>{value}</div>
+                </div>
+              ))}
+            </div>
+            <div>
+              <span style={{ fontSize: "0.78rem", color: "var(--gray-500)", marginRight: 10 }}>Weekly Schedule:</span>
+              <div style={{ display: "inline-flex", gap: 4, marginTop: 4 }}>
+                {DAYS.map((day, i) => {
+                  const isOff = (empShift.weekly_off || []).includes(DAY_FULL[i]);
+                  return (
+                    <span key={day} style={{
+                      fontSize: "0.72rem", fontWeight: 600, padding: "4px 10px", borderRadius: 6,
+                      background: isOff ? "var(--danger-bg)" : "var(--success-bg)",
+                      color: isOff ? "var(--danger)" : "var(--success)",
+                      border: `1px solid ${isOff ? "var(--danger)" : "var(--success)"}`,
+                    }}>
+                      {day} {isOff ? "OFF" : ""}
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div style={{ padding: "20px", textAlign: "center", color: "var(--gray-400)" }}>No shift assigned</div>
+        )}
       </div>
       <div className="card" style={{ marginTop: 20 }}>
         <div className="card-header"><h2>Bank & Payment Details</h2></div>
