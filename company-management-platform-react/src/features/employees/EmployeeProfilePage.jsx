@@ -106,7 +106,7 @@ export default function EmployeeProfilePage() {
 
         {activeTab === "overview" && <OverviewTab emp={emp} payrollEntry={payrollEntry} shifts={shifts} />}
         {activeTab === "attendance" && <AttendanceTab emp={emp} attendance={attendance} />}
-        {activeTab === "leave" && <LeaveTab emp={emp} leaveRequests={leaveRequests} leaveBalances={leaveBalances} />}
+        {activeTab === "leave" && <LeaveTab emp={emp} leaveRequests={leaveRequests} leaveBalances={leaveBalances} isAdmin={isAdmin} />}
         {activeTab === "performance" && <PerformanceTab emp={emp} attendance={attendance} />}
         {activeTab === "expense" && <ExpenseTab emp={emp} />}
       </div>
@@ -366,18 +366,143 @@ function AttendanceTab({ emp, attendance }) {
   );
 }
 
-function LeaveTab({ emp, leaveRequests, leaveBalances }) {
+function LeaveTab({ emp, leaveRequests, leaveBalances, isAdmin }) {
+  const [showAllocate, setShowAllocate] = useState(false);
+  const [leaveTypes, setLeaveTypes] = useState([]);
+  const [balances, setBalances] = useState([]);
+  const [allocForm, setAllocForm] = useState({ leaveType: "", days: "", action: "add", reason: "" });
+
   const empLeaves = leaveRequests.filter((l) => l.employeeId === emp.id).sort((a, b) => (b.appliedOn || "").localeCompare(a.appliedOn || ""));
   const empBal = leaveBalances.filter((l) => l.employeeId === emp.id);
+
+  useEffect(() => {
+    supabase.from("leave_policies").select("id, type, total_days").order("id").then(({ data }) => {
+      if (data) {
+        setLeaveTypes(data);
+        if (data.length > 0) setAllocForm((f) => ({ ...f, leaveType: String(data[0].id) }));
+      }
+    });
+    // Fetch fresh balances for this employee
+    supabase.from("leave_balances").select("*").eq("employee_id", emp.id).eq("year", new Date().getFullYear()).then(({ data }) => {
+      if (data) setBalances(data);
+    });
+  }, [emp.id]);
+
+  async function handleAllocate(e) {
+    e.preventDefault();
+    const policyId = Number(allocForm.leaveType);
+    const days = Number(allocForm.days);
+    if (!policyId || !days) return;
+
+    const year = new Date().getFullYear();
+    const existing = balances.find((b) => b.leave_policy_id === policyId && b.year === year);
+
+    if (existing) {
+      const newBalance = allocForm.action === "add" ? Number(existing.balance) + days : Math.max(0, Number(existing.balance) - days);
+      await supabase.from("leave_balances").update({ balance: newBalance }).eq("id", existing.id);
+    } else {
+      await supabase.from("leave_balances").insert({
+        employee_id: emp.id, leave_policy_id: policyId,
+        balance: allocForm.action === "add" ? days : 0,
+        used: 0, year,
+      });
+    }
+
+    // Refresh balances
+    const { data } = await supabase.from("leave_balances").select("*").eq("employee_id", emp.id).eq("year", new Date().getFullYear());
+    if (data) setBalances(data);
+    setShowAllocate(false);
+    setAllocForm({ leaveType: leaveTypes[0] ? String(leaveTypes[0].id) : "", days: "", action: "add", reason: "" });
+  }
+
+  function getTypeName(policyId) {
+    const lt = leaveTypes.find((t) => t.id === policyId);
+    return lt?.type || "—";
+  }
+
   return (
     <>
-      {empBal.length > 0 && <div style={{ display: "flex", gap: 12, marginBottom: 20 }}>{empBal.map((b) => (<div key={b.type} className="stat-card" style={{ flex: 1, textAlign: "center" }}><div style={{ fontSize: "1.5rem", fontWeight: 700, color: "var(--primary)" }}>{b.balance}</div><div style={{ fontSize: "0.78rem", color: "var(--gray-500)" }}>{b.type}</div></div>))}</div>}
-      <div className="card"><div className="card-header"><h2>Leave History</h2></div>
+      {/* Leave Balances */}
+      <div className="card" style={{ marginBottom: 20 }}>
+        <div className="card-header">
+          <h2>Leave Balances — {new Date().getFullYear()}</h2>
+          {isAdmin && (
+            <button className="btn btn-primary btn-sm" onClick={() => setShowAllocate(true)}>
+              <i className="fas fa-plus" /> Allocate Leaves
+            </button>
+          )}
+        </div>
+        <div style={{ display: "flex", gap: 12, padding: "0 20px 20px", flexWrap: "wrap" }}>
+          {balances.length > 0 ? balances.map((b) => (
+            <div key={b.id} style={{ flex: 1, minWidth: 120, padding: "16px", background: "var(--gray-50)", borderRadius: 10, border: "1px solid var(--gray-100)", textAlign: "center" }}>
+              <div style={{ fontSize: "1.8rem", fontWeight: 700, color: "var(--primary)" }}>{Number(b.balance)}</div>
+              <div style={{ fontSize: "0.78rem", color: "var(--gray-500)", marginTop: 2 }}>{getTypeName(b.leave_policy_id)}</div>
+              <div style={{ fontSize: "0.68rem", color: "var(--gray-400)", marginTop: 4 }}>Used: {Number(b.used)}</div>
+            </div>
+          )) : leaveTypes.map((lt) => (
+            <div key={lt.id} style={{ flex: 1, minWidth: 120, padding: "16px", background: "var(--gray-50)", borderRadius: 10, border: "1px dashed var(--gray-200)", textAlign: "center" }}>
+              <div style={{ fontSize: "1.8rem", fontWeight: 700, color: "var(--gray-300)" }}>0</div>
+              <div style={{ fontSize: "0.78rem", color: "var(--gray-400)", marginTop: 2 }}>{lt.type}</div>
+              <div style={{ fontSize: "0.68rem", color: "var(--gray-300)", marginTop: 4 }}>Not allocated</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Leave History */}
+      <div className="card">
+        <div className="card-header"><h2>Leave History</h2></div>
         <div className="table-container"><table><thead><tr><th>Type</th><th>From</th><th>To</th><th>Days</th><th>Reason</th><th>Status</th></tr></thead>
           <tbody>{empLeaves.length === 0 ? <tr><td colSpan={6} style={{ textAlign: "center", color: "var(--gray-400)", padding: 24 }}>No leave requests</td></tr> : empLeaves.map((l) => (
             <tr key={l.id}><td><strong>{l.type}</strong></td><td>{formatDate(l.from)}</td><td>{formatDate(l.to)}</td><td>{l.days}</td><td className="text-sm">{l.reason}</td><td><Badge status={l.status} /></td></tr>
           ))}</tbody></table></div>
       </div>
+
+      {/* Allocate Modal */}
+      {showAllocate && (
+        <div className="modal-overlay" onClick={() => setShowAllocate(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 440 }}>
+            <h3><i className="fas fa-calendar-plus" style={{ marginRight: 8, color: "var(--primary)" }} />Allocate Leaves — {emp.name}</h3>
+            <form onSubmit={handleAllocate}>
+              <div className="form-group">
+                <label>Leave Type</label>
+                <select value={allocForm.leaveType} onChange={(e) => setAllocForm({ ...allocForm, leaveType: e.target.value })}>
+                  {leaveTypes.map((lt) => <option key={lt.id} value={lt.id}>{lt.type} (Policy: {lt.total_days} days/year)</option>)}
+                </select>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                <div className="form-group">
+                  <label>Action</label>
+                  <select value={allocForm.action} onChange={(e) => setAllocForm({ ...allocForm, action: e.target.value })}>
+                    <option value="add">Add Leaves</option>
+                    <option value="deduct">Deduct Leaves</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>Number of Days</label>
+                  <input type="number" min="0.5" step="0.5" value={allocForm.days} onChange={(e) => setAllocForm({ ...allocForm, days: e.target.value })} placeholder="e.g. 5" required />
+                </div>
+              </div>
+              <div className="form-group">
+                <label>Reason (optional)</label>
+                <input type="text" value={allocForm.reason} onChange={(e) => setAllocForm({ ...allocForm, reason: e.target.value })} placeholder="e.g. Annual allocation, bonus leave" />
+              </div>
+              {allocForm.leaveType && allocForm.days && (
+                <div style={{ padding: 12, background: allocForm.action === "add" ? "var(--success-bg)" : "var(--danger-bg)", borderRadius: 8, fontSize: "0.82rem", color: allocForm.action === "add" ? "var(--success)" : "var(--danger)", marginBottom: 16 }}>
+                  <i className={`fas ${allocForm.action === "add" ? "fa-plus-circle" : "fa-minus-circle"}`} style={{ marginRight: 6 }} />
+                  {allocForm.action === "add" ? "Adding" : "Deducting"} <strong>{allocForm.days} days</strong> of <strong>{leaveTypes.find((t) => String(t.id) === allocForm.leaveType)?.type}</strong> to {emp.name}'s balance
+                </div>
+              )}
+              <div className="flex gap-2" style={{ justifyContent: "flex-end" }}>
+                <button type="button" className="btn btn-outline btn-sm" onClick={() => setShowAllocate(false)}>Cancel</button>
+                <button type="submit" className="btn btn-primary btn-sm">
+                  <i className={`fas ${allocForm.action === "add" ? "fa-plus" : "fa-minus"}`} /> {allocForm.action === "add" ? "Add Leaves" : "Deduct Leaves"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </>
   );
 }
