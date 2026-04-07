@@ -143,27 +143,33 @@ export default function EmployeeListPage() {
           <div className="table-container">
             <table>
               <thead>
-                <tr><th>Employee</th><th>Employee ID</th><th>Department</th><th>Designation</th><th>Location</th><th>Status</th></tr>
+                <tr><th>Employee</th><th>Employee ID</th><th>Department</th><th>Designation</th><th>Phone</th><th>Shift</th><th>Location</th><th>Status</th></tr>
               </thead>
               <tbody>
                 {filtered.length === 0 ? (
-                  <tr><td colSpan={6} style={{ textAlign: "center", color: "var(--gray-400)", padding: 32 }}>No employees found. Add your first employee to get started.</td></tr>
+                  <tr><td colSpan={8} style={{ textAlign: "center", color: "var(--gray-400)", padding: 32 }}>No employees found. Add your first employee to get started.</td></tr>
                 ) : (
-                  filtered.map((emp) => (
-                    <tr key={emp.id} className="clickable-row" onClick={() => navigate(`/employees/${emp.id}`)}>
-                      <td>
-                        <div className="employee-cell">
-                          <Avatar name={emp.name} initials={emp.avatar} avatarUrl={emp.avatarUrl} />
-                          <div><div className="name">{emp.name}</div><div className="sub">{emp.email}</div></div>
-                        </div>
-                      </td>
-                      <td>{emp.employeeId}</td>
-                      <td>{emp.department}</td>
-                      <td>{emp.designation}</td>
-                      <td>{emp.location}</td>
-                      <td><Badge status={emp.status} /></td>
-                    </tr>
-                  ))
+                  filtered.map((emp) => {
+                    const empShift = shifts.find((s) => s.id === emp.shiftId);
+                    const fmtT = (t) => { if (!t) return ""; const [h,m] = t.split(":"); const hr = parseInt(h); return `${hr > 12 ? hr-12 : hr || 12}:${m} ${hr >= 12 ? "PM" : "AM"}`; };
+                    return (
+                      <tr key={emp.id} className="clickable-row" onClick={() => navigate(`/employees/${emp.id}`)}>
+                        <td>
+                          <div className="employee-cell">
+                            <Avatar name={emp.name} initials={emp.avatar} avatarUrl={emp.avatarUrl} />
+                            <div><div className="name">{emp.name}</div><div className="sub">{emp.email}</div></div>
+                          </div>
+                        </td>
+                        <td>{emp.employeeId}</td>
+                        <td>{emp.department}</td>
+                        <td>{emp.designation}</td>
+                        <td className="text-sm">{emp.phone || "—"}</td>
+                        <td className="text-sm">{empShift ? <><div className="name">{empShift.name}</div><div className="sub">{fmtT(empShift.start_time)} - {fmtT(empShift.end_time)}</div></> : "—"}</td>
+                        <td>{emp.location}</td>
+                        <td><Badge status={emp.status} /></td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>

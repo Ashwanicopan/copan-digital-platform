@@ -229,6 +229,7 @@ export function DataProvider({ children }) {
         uan: row.uan,
         isAdmin: row.is_admin || false,
         isManager: row.is_manager || false,
+        shiftId: row.shift_id,
       }));
       setEmployees(transformedEmps);
 
