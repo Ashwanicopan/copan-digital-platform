@@ -90,9 +90,14 @@ export default function WelcomeBannerClock({ greeting, userName, today, pending,
             <i className="fas fa-sign-out-alt" /> Clock Out
           </button>
         ) : (
-          <span className="welcome-clock-detail" style={{ marginTop: 8, opacity: 0.8 }}>
-            <i className="fas fa-check-double" /> Done for today
-          </span>
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <span className="welcome-clock-detail" style={{ opacity: 0.8 }}>
+              <i className="fas fa-check-double" /> {myAttendance.clockIn} - {myAttendance.clockOut}
+            </span>
+            <button className="welcome-clock-btn clock-in" style={{ fontSize: "0.75rem", padding: "6px 12px" }} onClick={() => handleClockIn(myAttendance.workMode || "office")}>
+              <i className="fas fa-redo" /> Clock In Again
+            </button>
+          </div>
         )}
       </div>
 

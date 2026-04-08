@@ -79,11 +79,16 @@ export default function AttendancePage() {
                 <button className="btn-clock btn-clock-out" onClick={handleClockOut}>Clock Out</button>
               </>
             ) : hasClockedOut ? (
-              <span style={{ fontSize: "0.82rem", color: "var(--gray-500)", fontWeight: 600 }}>
-                <i className="fas fa-check-double" /> Done for today ({myAttendance.clockIn} - {myAttendance.clockOut})
-              </span>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <span style={{ fontSize: "0.82rem", color: "var(--gray-500)", fontWeight: 600 }}>
+                  <i className="fas fa-check-double" /> {myAttendance.clockIn} - {myAttendance.clockOut} ({myAttendance.hours ? myAttendance.hours + "h" : ""})
+                </span>
+                <button className="btn-clock btn-clock-in" style={{ fontSize: "0.78rem", padding: "6px 14px" }} onClick={() => handleClockIn(myAttendance.workMode || "office")}>
+                  <i className="fas fa-redo" style={{ marginRight: 4 }} />Clock In Again
+                </button>
+              </div>
             ) : (
-              <button className="btn-clock btn-clock-in" onClick={handleClockIn}>Clock In</button>
+              <button className="btn-clock btn-clock-in" onClick={() => handleClockIn("office")}>Clock In</button>
             )}
           </div>
         </div>
