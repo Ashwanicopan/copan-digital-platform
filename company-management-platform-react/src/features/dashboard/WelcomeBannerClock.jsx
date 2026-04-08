@@ -96,13 +96,18 @@ export default function WelcomeBannerClock({ greeting, userName, today, pending,
             <i className="fas fa-sign-out-alt" /> Clock Out
           </button>
         ) : (
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
             <span className="welcome-clock-detail" style={{ opacity: 0.8 }}>
               <i className="fas fa-check-double" /> {myAttendance.clockIn} - {myAttendance.clockOut}
             </span>
-            <button className="welcome-clock-btn clock-in" style={{ fontSize: "0.75rem", padding: "6px 12px" }} onClick={() => handleClockIn(myAttendance.workMode || "office")}>
-              <i className="fas fa-redo" /> Clock In Again
-            </button>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button className="welcome-clock-btn clock-in" style={{ fontSize: "0.75rem", padding: "6px 14px" }} onClick={() => handleClockIn("office")}>
+                <i className="fas fa-building" /> Office
+              </button>
+              <button className="welcome-clock-btn clock-in" style={{ fontSize: "0.75rem", padding: "6px 14px", background: "rgba(255,255,255,0.15)", backdropFilter: "blur(4px)" }} onClick={() => handleClockIn("wfh")}>
+                <i className="fas fa-home" /> WFH
+              </button>
+            </div>
           </div>
         )}
       </div>
