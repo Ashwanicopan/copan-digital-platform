@@ -107,7 +107,7 @@ export default function EmployeeProfilePage() {
         {activeTab === "overview" && <OverviewTab emp={emp} payrollEntry={payrollEntry} shifts={shifts} />}
         {activeTab === "attendance" && <AttendanceTab emp={emp} attendance={attendance} />}
         {activeTab === "leave" && <LeaveTab emp={emp} leaveRequests={leaveRequests} leaveBalances={leaveBalances} isAdmin={isAdmin} />}
-        {activeTab === "performance" && <PerformanceTab emp={emp} attendance={attendance} />}
+        {activeTab === "performance" && <PerformanceTab emp={emp} attendance={attendance} isAdmin={isAdmin} />}
         {activeTab === "expense" && <ExpenseTab emp={emp} />}
       </div>
 
@@ -507,36 +507,107 @@ function LeaveTab({ emp, leaveRequests, leaveBalances, isAdmin }) {
   );
 }
 
-function PerformanceTab({ emp, attendance }) {
+function PerformanceTab({ emp, attendance, isAdmin }) {
+  const [reviews, setReviews] = useState([]);
+  const [showReview, setShowReview] = useState(false);
+  const [reviewForm, setReviewForm] = useState({ period: `Q${Math.ceil((new Date().getMonth() + 1) / 3)} ${new Date().getFullYear()}`, rating: 3, strengths: "", improvements: "", goals: "", comments: "" });
+
+  useEffect(() => {
+    supabase.from("performance_reviews").select("*").eq("employee_id", emp.id).order("created_at", { ascending: false }).then(({ data }) => { if (data) setReviews(data); });
+  }, [emp.id]);
+
+  async function handleSubmitReview(e) {
+    e.preventDefault();
+    await supabase.from("performance_reviews").insert({ employee_id: emp.id, ...reviewForm, status: "submitted" });
+    const { data } = await supabase.from("performance_reviews").select("*").eq("employee_id", emp.id).order("created_at", { ascending: false });
+    if (data) setReviews(data);
+    setShowReview(false);
+  }
+
   const now = new Date();
   const last30 = attendance.filter((a) => { if (a.employeeId !== emp.id) return false; const diff = (now - new Date(a.date)) / 86400000; return diff >= 0 && diff <= 30; });
   const present = last30.filter((a) => a.status === "present").length;
   const totalH = last30.reduce((s, a) => s + (a.hours || 0), 0);
   const avgH = present > 0 ? (totalH / present).toFixed(1) : "0";
   const late = last30.filter((a) => { if (!a.clockIn) return false; const [h] = a.clockIn.split(":").map(Number); return h >= 10; }).length;
+  const overtime = last30.filter((a) => a.hours && a.hours > 9).length;
   const attRate = Math.round((present / 22) * 100);
   const punctRate = present > 0 ? Math.round(((present - late) / present) * 100) : 0;
+
+  const stars = (n) => "★".repeat(n) + "☆".repeat(5 - n);
+
   return (
     <>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 20 }}>
-        {[{ l: "Attendance", v: `${attRate}%`, i: "fa-user-check", c: attRate >= 90 ? "var(--success)" : attRate >= 75 ? "var(--warning)" : "var(--danger)" }, { l: "Punctuality", v: `${punctRate}%`, i: "fa-clock", c: punctRate >= 90 ? "var(--success)" : "var(--warning)" }, { l: "Avg Hours", v: `${avgH}h`, i: "fa-hourglass-half", c: Number(avgH) >= 8 ? "var(--success)" : "var(--warning)" }, { l: "Late", v: late, i: "fa-exclamation-triangle", c: late <= 2 ? "var(--success)" : "var(--danger)" }].map((m) => (
-          <div key={m.l} className="card" style={{ padding: 20, textAlign: "center" }}><i className={`fas ${m.i}`} style={{ fontSize: "1.5rem", color: m.c, marginBottom: 8 }} /><div style={{ fontSize: "1.8rem", fontWeight: 700, color: m.c }}>{m.v}</div><div style={{ fontSize: "0.8rem", color: "var(--gray-500)", marginTop: 4 }}>{m.l}</div></div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 12, marginBottom: 20 }}>
+        {[{ l: "Attendance", v: `${attRate}%`, c: attRate >= 90 ? "var(--success)" : "var(--warning)" }, { l: "Punctuality", v: `${punctRate}%`, c: punctRate >= 90 ? "var(--success)" : "var(--warning)" }, { l: "Avg Hours", v: `${avgH}h`, c: Number(avgH) >= 8 ? "var(--success)" : "var(--warning)" }, { l: "Late Arrivals", v: late, c: late <= 2 ? "var(--success)" : "var(--danger)" }, { l: "Overtime Days", v: overtime, c: "var(--info)" }].map((m) => (
+          <div key={m.l} className="stat-card" style={{ textAlign: "center" }}><div style={{ fontSize: "1.5rem", fontWeight: 700, color: m.c }}>{m.v}</div><div style={{ fontSize: "0.72rem", color: "var(--gray-500)" }}>{m.l}</div></div>
         ))}
       </div>
-      <div className="card"><div className="card-header"><h2>Last 30 Days</h2></div><div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 16 }}>
-        {[{ l: "Attendance", v: attRate, c: "var(--success)" }, { l: "Punctuality", v: punctRate, c: "var(--primary)" }, { l: "Hours", v: Math.min(100, Math.round((Number(avgH) / 8) * 100)), c: "var(--info)" }].map((b) => (
+
+      <div className="card" style={{ marginBottom: 20 }}><div className="card-header"><h2>Progress</h2></div><div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 14 }}>
+        {[{ l: "Attendance", v: attRate, c: "var(--success)" }, { l: "Punctuality", v: punctRate, c: "var(--primary)" }, { l: "Hours Compliance", v: Math.min(100, Math.round((Number(avgH) / 8) * 100)), c: "var(--info)" }].map((b) => (
           <div key={b.l}><div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6, fontSize: "0.85rem" }}><span style={{ fontWeight: 500 }}>{b.l}</span><span style={{ fontWeight: 600, color: b.c }}>{b.v}%</span></div><div style={{ background: "var(--gray-100)", borderRadius: 8, height: 10, overflow: "hidden" }}><div style={{ width: `${b.v}%`, height: "100%", background: b.c, borderRadius: 8 }} /></div></div>
         ))}
       </div></div>
+
+      {/* Performance Reviews */}
+      <div className="card">
+        <div className="card-header">
+          <h2>Performance Reviews</h2>
+          {isAdmin && <button className="btn btn-primary btn-sm" onClick={() => setShowReview(true)}><i className="fas fa-plus" /> Add Review</button>}
+        </div>
+        <div className="table-container">
+          <table>
+            <thead><tr><th>Period</th><th>Rating</th><th>Strengths</th><th>Improvements</th><th>Status</th></tr></thead>
+            <tbody>
+              {reviews.length === 0 ? <tr><td colSpan={5} style={{ textAlign: "center", color: "var(--gray-400)", padding: 24 }}>No reviews yet</td></tr> :
+              reviews.map((r) => (
+                <tr key={r.id}>
+                  <td><strong>{r.period}</strong></td>
+                  <td style={{ color: "var(--warning)", letterSpacing: 2 }}>{stars(r.rating)}</td>
+                  <td className="text-sm">{r.strengths || "—"}</td>
+                  <td className="text-sm">{r.improvements || "—"}</td>
+                  <td><Badge status={r.status === "submitted" ? "approved" : "pending"} /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {showReview && (
+        <div className="modal-overlay" onClick={() => setShowReview(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 520 }}>
+            <h3><i className="fas fa-chart-line" style={{ marginRight: 8, color: "var(--primary)" }} />Performance Review — {emp.name}</h3>
+            <form onSubmit={handleSubmitReview}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                <div className="form-group"><label>Period</label><input type="text" value={reviewForm.period} onChange={(e) => setReviewForm({ ...reviewForm, period: e.target.value })} required /></div>
+                <div className="form-group"><label>Rating (1-5)</label><select value={reviewForm.rating} onChange={(e) => setReviewForm({ ...reviewForm, rating: Number(e.target.value) })}>{[1,2,3,4,5].map((n) => <option key={n} value={n}>{stars(n)} ({n})</option>)}</select></div>
+              </div>
+              <div className="form-group"><label>Strengths</label><textarea rows="2" value={reviewForm.strengths} onChange={(e) => setReviewForm({ ...reviewForm, strengths: e.target.value })} placeholder="Key strengths observed" /></div>
+              <div className="form-group"><label>Areas for Improvement</label><textarea rows="2" value={reviewForm.improvements} onChange={(e) => setReviewForm({ ...reviewForm, improvements: e.target.value })} placeholder="Areas to improve" /></div>
+              <div className="form-group"><label>Goals for Next Period</label><textarea rows="2" value={reviewForm.goals} onChange={(e) => setReviewForm({ ...reviewForm, goals: e.target.value })} placeholder="Goals and targets" /></div>
+              <div className="flex gap-2" style={{ justifyContent: "flex-end", marginTop: 16 }}>
+                <button type="button" className="btn btn-outline btn-sm" onClick={() => setShowReview(false)}>Cancel</button>
+                <button type="submit" className="btn btn-primary btn-sm">Submit Review</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </>
   );
 }
 
-function ExpenseTab() {
+function ExpenseTab({ emp }) {
+  const [expenses, setExpenses] = useState([]);
+  useEffect(() => { supabase.from("expenses").select("*").eq("employee_id", emp.id).order("created_at", { ascending: false }).then(({ data }) => { if (data) setExpenses(data); }); }, [emp.id]);
   return (
     <div className="card"><div className="card-header"><h2>Expense & Travel Claims</h2></div>
       <div className="table-container"><table><thead><tr><th>Date</th><th>Category</th><th>Description</th><th>Amount</th><th>Status</th></tr></thead>
-        <tbody><tr><td colSpan={5} style={{ textAlign: "center", color: "var(--gray-400)", padding: 32 }}><i className="fas fa-receipt" style={{ fontSize: "2rem", marginBottom: 8, display: "block", opacity: 0.3 }} />No claims yet</td></tr></tbody></table></div>
+        <tbody>{expenses.length === 0 ? <tr><td colSpan={5} style={{ textAlign: "center", color: "var(--gray-400)", padding: 32 }}><i className="fas fa-receipt" style={{ fontSize: "2rem", marginBottom: 8, display: "block", opacity: 0.3 }} />No claims yet</td></tr> :
+        expenses.map((e) => (<tr key={e.id}><td>{formatDate(e.date)}</td><td>{e.category}</td><td className="text-sm">{e.description}</td><td className="salary-cell">{formatCurrency(Number(e.amount))}</td><td><Badge status={e.status} /></td></tr>))
+        }</tbody></table></div>
     </div>
   );
 }

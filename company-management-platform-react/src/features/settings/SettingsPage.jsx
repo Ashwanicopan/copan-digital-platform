@@ -10,6 +10,7 @@ import PenaltyRulesSettings from "./tabs/PenaltyRulesSettings";
 import HolidaySettings from "./tabs/HolidaySettings";
 import OrganizationSettings from "./tabs/OrganizationSettings";
 import ShiftSettings from "./tabs/ShiftSettings";
+import BulkLeaveAllocation from "./tabs/BulkLeaveAllocation";
 
 const tabs = [
   { id: "company", icon: "fa-building", label: "Company Profile" },
@@ -18,6 +19,7 @@ const tabs = [
   { id: "roles", icon: "fa-user-shield", label: "Roles & Permissions" },
   { id: "leave-policy", icon: "fa-calendar-alt", label: "Leave Policy" },
   { id: "holidays", icon: "fa-umbrella-beach", label: "Holidays" },
+  { id: "bulk-leave", icon: "fa-users-cog", label: "Bulk Leave Allocation" },
   { id: "penalty-rules", icon: "fa-gavel", label: "Penalty Rules" },
   { id: "notifications", icon: "fa-bell", label: "Notifications" },
   { id: "payroll-settings", icon: "fa-wallet", label: "Payroll Config" },
@@ -30,6 +32,7 @@ const tabComponents = {
   roles: RolesSettings,
   "leave-policy": LeavePolicySettings,
   holidays: HolidaySettings,
+  "bulk-leave": BulkLeaveAllocation,
   "penalty-rules": PenaltyRulesSettings,
   notifications: NotificationSettings,
   "payroll-settings": PayrollSettings,
