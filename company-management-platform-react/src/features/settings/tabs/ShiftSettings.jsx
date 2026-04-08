@@ -18,7 +18,7 @@ export default function ShiftSettings() {
 
   function openAdd() {
     setEditing(null);
-    setForm({ name: "", start_time: "09:00", end_time: "18:00", grace_minutes: 15, break_minutes: 60, is_default: false, weekly_off: ["Sunday"] });
+    setForm({ name: "", start_time: "09:00", end_time: "18:00", grace_minutes: 15, break_minutes: 60, break_start: "13:00", break_end: "14:00", is_default: false, weekly_off: ["Sunday"] });
     setShowModal(true);
   }
 
@@ -30,6 +30,8 @@ export default function ShiftSettings() {
       end_time: shift.end_time?.substring(0, 5) || "18:00",
       grace_minutes: shift.grace_minutes || 15,
       break_minutes: shift.break_minutes || 60,
+      break_start: shift.break_start?.substring(0, 5) || "13:00",
+      break_end: shift.break_end?.substring(0, 5) || "14:00",
       is_default: shift.is_default,
       weekly_off: shift.weekly_off || ["Sunday"],
     });
@@ -38,7 +40,7 @@ export default function ShiftSettings() {
 
   async function handleSave(e) {
     e.preventDefault();
-    const payload = { name: form.name, start_time: form.start_time, end_time: form.end_time, grace_minutes: form.grace_minutes, break_minutes: form.break_minutes, is_default: form.is_default, weekly_off: form.weekly_off };
+    const payload = { name: form.name, start_time: form.start_time, end_time: form.end_time, grace_minutes: form.grace_minutes, break_minutes: form.break_minutes, break_start: form.break_start, break_end: form.break_end, is_default: form.is_default, weekly_off: form.weekly_off };
     if (editing) {
       if (form.is_default) await supabase.from("shifts").update({ is_default: false }).neq("id", editing);
       await supabase.from("shifts").update(payload).eq("id", editing);
@@ -144,7 +146,7 @@ export default function ShiftSettings() {
                     <span style={{ color: "var(--gray-500)" }}>Duration: </span><strong>{calcDuration(shift.start_time, shift.end_time)}</strong>
                   </div>
                   <div style={{ background: "#fff", border: "1px solid var(--gray-200)", borderRadius: 6, padding: "8px 14px", fontSize: "0.82rem" }}>
-                    <span style={{ color: "var(--gray-500)" }}>Break: </span><strong>{formatBreak(shift.break_minutes)}</strong>
+                    <span style={{ color: "var(--gray-500)" }}>Break: </span><strong>{formatBreak(shift.break_minutes)} ({formatTime(shift.break_start)} - {formatTime(shift.break_end)})</strong>
                   </div>
                   <div style={{ background: "#fff", border: "1px solid var(--gray-200)", borderRadius: 6, padding: "8px 14px", fontSize: "0.82rem" }}>
                     <span style={{ color: "var(--gray-500)" }}>Grace: </span><strong>{shift.grace_minutes} min</strong>
@@ -204,9 +206,19 @@ export default function ShiftSettings() {
                   <input type="number" min="0" max="60" value={form.grace_minutes} onChange={(e) => setForm({ ...form, grace_minutes: Number(e.target.value) })} />
                 </div>
                 <div className="form-group">
-                  <label>Break Time (minutes)</label>
+                  <label>Break Duration (minutes)</label>
                   <input type="number" min="0" max="120" value={form.break_minutes} onChange={(e) => setForm({ ...form, break_minutes: Number(e.target.value) })} />
                   <span style={{ fontSize: "0.7rem", color: "var(--gray-400)", marginTop: 2, display: "block" }}>{formatBreak(form.break_minutes)} break per day</span>
+                </div>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                <div className="form-group">
+                  <label>Break Start Time</label>
+                  <input type="time" value={form.break_start} onChange={(e) => setForm({ ...form, break_start: e.target.value })} />
+                </div>
+                <div className="form-group">
+                  <label>Break End Time</label>
+                  <input type="time" value={form.break_end} onChange={(e) => setForm({ ...form, break_end: e.target.value })} />
                 </div>
               </div>
 

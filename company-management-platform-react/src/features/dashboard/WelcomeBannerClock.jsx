@@ -14,7 +14,13 @@ export default function WelcomeBannerClock({ greeting, userName, today, pending,
 
   async function handleClockIn(workMode = "office") {
     if (!user?.id) return;
-    await clockIn(user.id, workMode);
+    const result = await clockIn(user.id, workMode);
+    const late = result?.lateMinutes || 0;
+    if (late > 0) {
+      const h = Math.floor(late / 60);
+      const m = late % 60;
+      alert(`⚠️ You are late by ${h > 0 ? h + "h " : ""}${m}m. Please be on time.`);
+    }
   }
 
   async function handleClockOut() {

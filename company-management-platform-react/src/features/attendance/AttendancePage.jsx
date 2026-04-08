@@ -36,8 +36,16 @@ export default function AttendancePage() {
 
   async function handleClockIn(workMode) {
     if (!user?.id) return;
-    const t = await clockIn(user.id, workMode);
-    alert(`Clocked in at ${t}${workMode === "wfh" ? " (WFH)" : ""}`);
+    const result = await clockIn(user.id, workMode);
+    const t = result?.time || result;
+    const late = result?.lateMinutes || 0;
+    if (late > 0) {
+      const h = Math.floor(late / 60);
+      const m = late % 60;
+      alert(`Clocked in at ${t}${workMode === "wfh" ? " (WFH)" : ""}\n\n⚠️ You are late by ${h > 0 ? h + "h " : ""}${m}m. Please be on time.`);
+    } else {
+      alert(`Clocked in at ${t}${workMode === "wfh" ? " (WFH)" : ""} ✓ On time!`);
+    }
   }
 
   async function handleClockOut() {
@@ -75,6 +83,11 @@ export default function AttendancePage() {
               <>
                 <span style={{ fontSize: "0.82rem", color: "var(--success)", fontWeight: 600 }}>
                   <i className="fas fa-check-circle" /> Clocked in at {myAttendance.clockIn}
+                  {myAttendance.lateMinutes > 0 && (
+                    <span style={{ marginLeft: 8, background: "var(--danger-bg)", color: "var(--danger)", padding: "2px 8px", borderRadius: 4, fontSize: "0.72rem" }}>
+                      Late by {Math.floor(myAttendance.lateMinutes / 60) > 0 ? Math.floor(myAttendance.lateMinutes / 60) + "h " : ""}{myAttendance.lateMinutes % 60}m
+                    </span>
+                  )}
                 </span>
                 <button className="btn-clock btn-clock-out" onClick={handleClockOut}>Clock Out</button>
               </>

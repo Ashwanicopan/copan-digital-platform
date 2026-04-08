@@ -45,6 +45,7 @@ function transformAttendance(row) {
     status: row.status,
     hours: row.hours ? Number(row.hours) : null,
     workMode: row.work_mode || "office",
+    lateMinutes: row.late_minutes || 0,
   };
 }
 
@@ -569,27 +570,45 @@ export function DataProvider({ children }) {
   async function clockIn(employeeId, workMode = "office") {
     const today = new Date().toISOString().split("T")[0];
     const now = new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+
+    // Check shift timing to calculate late minutes
+    let lateMinutes = 0;
     try {
-      // Check if record exists for today
+      const { data: empData } = await supabase.from("employees").select("shift_id").eq("id", employeeId).single();
+      if (empData?.shift_id) {
+        const { data: shiftData } = await supabase.from("shifts").select("start_time, grace_minutes").eq("id", empData.shift_id).single();
+        if (shiftData?.start_time) {
+          const [sh, sm] = shiftData.start_time.split(":").map(Number);
+          const [nh, nm] = now.split(":").map(Number);
+          const shiftStart = sh * 60 + sm;
+          const clockInTime = nh * 60 + nm;
+          const grace = shiftData.grace_minutes || 0;
+          const diff = clockInTime - shiftStart - grace;
+          if (diff > 0) lateMinutes = diff;
+        }
+      }
+    } catch (e) { /* ignore shift check errors */ }
+
+    try {
       const { data: existing } = await supabase.from("attendance").select("id").eq("employee_id", employeeId).eq("date", today).single();
 
       let result;
+      const payload = { clock_in: now, status: "present", work_mode: workMode, late_minutes: lateMinutes };
       if (existing) {
-        // Update existing record
-        result = await supabase.from("attendance").update({ clock_in: now, status: "present", work_mode: workMode }).eq("id", existing.id).select().single();
+        result = await supabase.from("attendance").update(payload).eq("id", existing.id).select().single();
       } else {
-        result = await supabase.from("attendance").insert({ employee_id: employeeId, date: today, clock_in: now, status: "present", work_mode: workMode }).select().single();
+        result = await supabase.from("attendance").insert({ employee_id: employeeId, date: today, ...payload }).select().single();
       }
 
       if (result.data) {
         setAttendance((prev) => [...prev.filter((a) => !(a.employeeId === employeeId && a.date === today)), transformAttendance(result.data)]);
-        return now;
+        return { time: now, lateMinutes };
       }
     } catch (e) {
       console.warn("Clock in error:", e);
     }
-    setAttendance((prev) => [...prev.filter((a) => !(a.employeeId === employeeId && a.date === today)), { employeeId, date: today, clockIn: now, clockOut: null, status: "present", hours: null }]);
-    return now;
+    setAttendance((prev) => [...prev.filter((a) => !(a.employeeId === employeeId && a.date === today)), { employeeId, date: today, clockIn: now, clockOut: null, status: "present", hours: null, workMode, lateMinutes }]);
+    return { time: now, lateMinutes };
   }
 
   async function clockOut(employeeId) {
