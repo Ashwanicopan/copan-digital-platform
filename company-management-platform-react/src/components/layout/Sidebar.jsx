@@ -11,6 +11,7 @@ const navItems = [
     { to: "/leave", icon: "fa-calendar-alt", label: "Leave", badge: true },
     { to: "/payroll", icon: "fa-wallet", label: "Payroll", adminOnly: true },
     { to: "/expenses", icon: "fa-receipt", label: "Expenses" },
+    { to: "/documents", icon: "fa-folder-open", label: "Documents" },
   ]},
   { section: "Organization", items: [
     { to: "/assets", icon: "fa-laptop", label: "Assets", adminOnly: true },

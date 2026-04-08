@@ -16,6 +16,8 @@ const profileTabs = [
   { id: "leave", label: "Leave", icon: "fa-calendar-alt" },
   { id: "performance", label: "Performance", icon: "fa-chart-line" },
   { id: "expense", label: "Expense & Travel", icon: "fa-receipt" },
+  { id: "onboarding", label: "Onboarding", icon: "fa-clipboard-list" },
+  { id: "documents", label: "Documents", icon: "fa-folder-open" },
 ];
 
 export default function EmployeeProfilePage() {
@@ -109,6 +111,8 @@ export default function EmployeeProfilePage() {
         {activeTab === "leave" && <LeaveTab emp={emp} leaveRequests={leaveRequests} leaveBalances={leaveBalances} isAdmin={isAdmin} />}
         {activeTab === "performance" && <PerformanceTab emp={emp} attendance={attendance} isAdmin={isAdmin} />}
         {activeTab === "expense" && <ExpenseTab emp={emp} />}
+        {activeTab === "onboarding" && <OnboardingTab emp={emp} isAdmin={isAdmin} />}
+        {activeTab === "documents" && <DocumentsTab emp={emp} isAdmin={isAdmin} />}
       </div>
 
       {/* Edit Modal */}
@@ -609,5 +613,173 @@ function ExpenseTab({ emp }) {
         expenses.map((e) => (<tr key={e.id}><td>{formatDate(e.date)}</td><td>{e.category}</td><td className="text-sm">{e.description}</td><td className="salary-cell">{formatCurrency(Number(e.amount))}</td><td><Badge status={e.status} /></td></tr>))
         }</tbody></table></div>
     </div>
+  );
+}
+
+const defaultOnboardingTasks = [
+  "Submit ID proof (Aadhaar/Passport)",
+  "Submit PAN card copy",
+  "Submit bank account details",
+  "Sign offer letter",
+  "Complete IT setup (laptop, email, access)",
+  "Attend HR orientation session",
+  "Review company policies & handbook",
+  "Meet team manager and members",
+  "Set up attendance & leave portal access",
+];
+
+function OnboardingTab({ emp, isAdmin }) {
+  const [tasks, setTasks] = useState([]);
+  const [newTask, setNewTask] = useState("");
+
+  useEffect(() => {
+    supabase.from("onboarding_tasks").select("*").eq("employee_id", emp.id).order("created_at").then(({ data }) => {
+      if (data && data.length > 0) setTasks(data);
+    });
+  }, [emp.id]);
+
+  async function initTasks() {
+    const entries = defaultOnboardingTasks.map((task) => ({ employee_id: emp.id, task, completed: false }));
+    await supabase.from("onboarding_tasks").insert(entries);
+    const { data } = await supabase.from("onboarding_tasks").select("*").eq("employee_id", emp.id).order("created_at");
+    if (data) setTasks(data);
+  }
+
+  async function toggleTask(id, completed) {
+    await supabase.from("onboarding_tasks").update({ completed: !completed, completed_at: !completed ? new Date().toISOString() : null }).eq("id", id);
+    setTasks((prev) => prev.map((t) => t.id === id ? { ...t, completed: !completed } : t));
+  }
+
+  async function addTask(e) {
+    e.preventDefault();
+    if (!newTask.trim()) return;
+    const { data } = await supabase.from("onboarding_tasks").insert({ employee_id: emp.id, task: newTask }).select().single();
+    if (data) setTasks((prev) => [...prev, data]);
+    setNewTask("");
+  }
+
+  async function deleteTask(id) {
+    await supabase.from("onboarding_tasks").delete().eq("id", id);
+    setTasks((prev) => prev.filter((t) => t.id !== id));
+  }
+
+  const completed = tasks.filter((t) => t.completed).length;
+  const progress = tasks.length > 0 ? Math.round((completed / tasks.length) * 100) : 0;
+
+  return (
+    <>
+      {tasks.length === 0 ? (
+        <div className="card" style={{ textAlign: "center", padding: 40 }}>
+          <i className="fas fa-clipboard-list" style={{ fontSize: "3rem", color: "var(--gray-300)", marginBottom: 12 }} />
+          <h3 style={{ marginBottom: 8 }}>No Onboarding Checklist</h3>
+          <p style={{ color: "var(--gray-500)", fontSize: "0.88rem", marginBottom: 20 }}>Create a standard onboarding checklist for {emp.name}</p>
+          {isAdmin && <button className="btn btn-primary" onClick={initTasks}><i className="fas fa-magic" /> Create Default Checklist</button>}
+        </div>
+      ) : (
+        <>
+          <div className="card" style={{ marginBottom: 20, padding: "20px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+              <span style={{ fontSize: "0.9rem", fontWeight: 600 }}>Onboarding Progress</span>
+              <span style={{ fontSize: "0.85rem", fontWeight: 700, color: progress === 100 ? "var(--success)" : "var(--primary)" }}>{completed}/{tasks.length} ({progress}%)</span>
+            </div>
+            <div style={{ background: "var(--gray-100)", borderRadius: 8, height: 12, overflow: "hidden" }}>
+              <div style={{ width: `${progress}%`, height: "100%", background: progress === 100 ? "var(--success)" : "var(--primary)", borderRadius: 8, transition: "width 0.3s" }} />
+            </div>
+          </div>
+
+          <div className="card">
+            <div className="card-header"><h2>Checklist</h2></div>
+            <div style={{ padding: "0 20px 20px" }}>
+              {tasks.map((t) => (
+                <div key={t.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 0", borderBottom: "1px solid var(--gray-50)" }}>
+                  <input type="checkbox" checked={t.completed} onChange={() => toggleTask(t.id, t.completed)} style={{ width: 20, height: 20, accentColor: "var(--success)", cursor: "pointer" }} />
+                  <span style={{ flex: 1, fontSize: "0.88rem", textDecoration: t.completed ? "line-through" : "none", color: t.completed ? "var(--gray-400)" : "var(--gray-800)" }}>{t.task}</span>
+                  {isAdmin && <button style={{ background: "none", border: "none", color: "var(--gray-400)", cursor: "pointer", fontSize: "0.8rem" }} onClick={() => deleteTask(t.id)}><i className="fas fa-times" /></button>}
+                </div>
+              ))}
+              {isAdmin && (
+                <form onSubmit={addTask} style={{ display: "flex", gap: 8, marginTop: 12 }}>
+                  <input type="text" value={newTask} onChange={(e) => setNewTask(e.target.value)} placeholder="Add custom task..." style={{ flex: 1, padding: "8px 12px", border: "1px solid var(--gray-200)", borderRadius: 6, fontSize: "0.85rem" }} />
+                  <button type="submit" className="btn btn-outline btn-sm">Add</button>
+                </form>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+    </>
+  );
+}
+
+function DocumentsTab({ emp, isAdmin }) {
+  const [docs, setDocs] = useState([]);
+  const [showAdd, setShowAdd] = useState(false);
+  const [form, setForm] = useState({ name: "", category: "ID Proof", file_url: "" });
+  const docCats = ["ID Proof", "Address Proof", "PAN Card", "Aadhaar Card", "Offer Letter", "Experience Letter", "Education Certificate", "Bank Details", "Other"];
+
+  useEffect(() => {
+    supabase.from("documents").select("*").eq("employee_id", emp.id).order("uploaded_at", { ascending: false }).then(({ data }) => { if (data) setDocs(data); });
+  }, [emp.id]);
+
+  async function handleUpload(e) {
+    e.preventDefault();
+    await supabase.from("documents").insert({ employee_id: emp.id, name: form.name, category: form.category, file_url: form.file_url || null, file_name: form.name });
+    const { data } = await supabase.from("documents").select("*").eq("employee_id", emp.id).order("uploaded_at", { ascending: false });
+    if (data) setDocs(data);
+    setShowAdd(false); setForm({ name: "", category: "ID Proof", file_url: "" });
+  }
+
+  async function toggleVerify(id, current) { await supabase.from("documents").update({ verified: !current }).eq("id", id); setDocs((prev) => prev.map((d) => d.id === id ? { ...d, verified: !current } : d)); }
+  async function deleteDoc(id) { await supabase.from("documents").delete().eq("id", id); setDocs((prev) => prev.filter((d) => d.id !== id)); }
+
+  return (
+    <>
+      <div className="card">
+        <div className="card-header">
+          <h2>Documents ({docs.length})</h2>
+          <button className="btn btn-primary btn-sm" onClick={() => setShowAdd(true)}><i className="fas fa-upload" /> Upload</button>
+        </div>
+        <div style={{ padding: "0 20px 20px" }}>
+          {docs.length === 0 ? (
+            <div style={{ textAlign: "center", color: "var(--gray-400)", padding: 24 }}><i className="fas fa-folder-open" style={{ fontSize: "2rem", marginBottom: 8, display: "block", opacity: 0.3 }} />No documents uploaded</div>
+          ) : (
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+              {docs.map((doc) => (
+                <div key={doc.id} style={{ padding: 14, border: "1px solid var(--gray-100)", borderRadius: 10, display: "flex", alignItems: "center", gap: 12 }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 8, background: doc.verified ? "var(--success-bg)" : "var(--gray-50)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <i className="fas fa-file-alt" style={{ color: doc.verified ? "var(--success)" : "var(--gray-400)" }} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: "0.85rem", fontWeight: 600 }}>{doc.name}</div>
+                    <div style={{ fontSize: "0.72rem", color: "var(--gray-400)" }}>{doc.category} {doc.verified ? "· Verified ✓" : "· Pending"}</div>
+                  </div>
+                  <div className="flex gap-1">
+                    {isAdmin && <button style={{ background: "none", border: "none", cursor: "pointer", color: doc.verified ? "var(--success)" : "var(--gray-400)" }} onClick={() => toggleVerify(doc.id, doc.verified)} title={doc.verified ? "Unverify" : "Verify"}><i className={`fas ${doc.verified ? "fa-check-circle" : "fa-circle"}`} /></button>}
+                    <button style={{ background: "none", border: "none", cursor: "pointer", color: "var(--danger)" }} onClick={() => deleteDoc(doc.id)}><i className="fas fa-trash" style={{ fontSize: "0.8rem" }} /></button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {showAdd && (
+        <div className="modal-overlay" onClick={() => setShowAdd(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <h3><i className="fas fa-upload" style={{ marginRight: 8, color: "var(--primary)" }} />Upload Document</h3>
+            <form onSubmit={handleUpload}>
+              <div className="form-group"><label>Document Name</label><input type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. Aadhaar Card" required /></div>
+              <div className="form-group"><label>Category</label><select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>{docCats.map((c) => <option key={c}>{c}</option>)}</select></div>
+              <div className="form-group"><label>Document URL</label><input type="url" value={form.file_url} onChange={(e) => setForm({ ...form, file_url: e.target.value })} placeholder="Google Drive / link" /></div>
+              <div className="flex gap-2" style={{ justifyContent: "flex-end", marginTop: 16 }}>
+                <button type="button" className="btn btn-outline btn-sm" onClick={() => setShowAdd(false)}>Cancel</button>
+                <button type="submit" className="btn btn-primary btn-sm">Upload</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

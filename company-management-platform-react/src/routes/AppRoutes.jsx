@@ -12,6 +12,7 @@ import PayrollPage from "../features/payroll/PayrollPage";
 import ExpensesPage from "../features/expenses/ExpensesPage";
 import AssetsPage from "../features/assets/AssetsPage";
 import ReportsPage from "../features/reports/ReportsPage";
+import DocumentsPage from "../features/documents/DocumentsPage";
 import SettingsPage from "../features/settings/SettingsPage";
 import ProfilePage from "../features/profile/ProfilePage";
 
@@ -47,6 +48,7 @@ export default function AppRoutes() {
         <Route path="/expenses" element={<ExpensesPage />} />
         <Route path="/assets" element={<AssetsPage />} />
         <Route path="/reports" element={<ReportsPage />} />
+        <Route path="/documents" element={<DocumentsPage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/profile" element={<ProfilePage />} />
       </Route>

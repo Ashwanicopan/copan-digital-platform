@@ -11,6 +11,7 @@ import HolidaySettings from "./tabs/HolidaySettings";
 import OrganizationSettings from "./tabs/OrganizationSettings";
 import ShiftSettings from "./tabs/ShiftSettings";
 import BulkLeaveAllocation from "./tabs/BulkLeaveAllocation";
+import AuditLogSettings from "./tabs/AuditLogSettings";
 
 const tabs = [
   { id: "company", icon: "fa-building", label: "Company Profile" },
@@ -23,6 +24,7 @@ const tabs = [
   { id: "penalty-rules", icon: "fa-gavel", label: "Penalty Rules" },
   { id: "notifications", icon: "fa-bell", label: "Notifications" },
   { id: "payroll-settings", icon: "fa-wallet", label: "Payroll Config" },
+  { id: "audit-logs", icon: "fa-history", label: "Audit Logs" },
 ];
 
 const tabComponents = {
@@ -36,6 +38,7 @@ const tabComponents = {
   "penalty-rules": PenaltyRulesSettings,
   notifications: NotificationSettings,
   "payroll-settings": PayrollSettings,
+  "audit-logs": AuditLogSettings,
 };
 
 export default function SettingsPage() {
