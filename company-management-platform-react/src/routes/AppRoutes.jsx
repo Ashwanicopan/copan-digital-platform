@@ -14,6 +14,7 @@ import AssetsPage from "../features/assets/AssetsPage";
 import ReportsPage from "../features/reports/ReportsPage";
 import DocumentsPage from "../features/documents/DocumentsPage";
 import SettingsPage from "../features/settings/SettingsPage";
+import SeatingPage from "../features/seating/SeatingPage";
 import ProfilePage from "../features/profile/ProfilePage";
 
 function ProtectedRoute({ children }) {
@@ -49,6 +50,7 @@ export default function AppRoutes() {
         <Route path="/assets" element={<AssetsPage />} />
         <Route path="/reports" element={<ReportsPage />} />
         <Route path="/documents" element={<DocumentsPage />} />
+        <Route path="/seating" element={<SeatingPage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/profile" element={<ProfilePage />} />
       </Route>

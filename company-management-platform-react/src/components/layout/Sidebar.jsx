@@ -14,6 +14,7 @@ const navItems = [
   ]},
   { section: "Organization", items: [
     { to: "/payroll", icon: "fa-wallet", label: "Payroll", adminOnly: true },
+    { to: "/seating", icon: "fa-chair", label: "Seating Plan" },
     { to: "/assets", icon: "fa-laptop", label: "Assets", adminOnly: true },
     { to: "/reports", icon: "fa-chart-bar", label: "Reports", adminOnly: true },
     { to: "/settings", icon: "fa-cog", label: "Settings", adminOnly: true },
