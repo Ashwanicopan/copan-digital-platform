@@ -233,9 +233,26 @@ function PayslipDetail({ data, onClose }) {
   if (!emp) return null;
   const pfAccountNo = `PYBNG00631020000${(emp.id || 0).toString().padStart(3, "0")}28 JXOPE1760A`;
 
+  async function downloadPDF() {
+    const el = document.getElementById("payslip-print");
+    if (!el) return;
+    const html2canvas = (await import("html2canvas-pro")).default;
+    const { jsPDF } = await import("jspdf");
+    const canvas = await html2canvas(el, { scale: 2, useCORS: true });
+    const imgData = canvas.toDataURL("image/png");
+    const pdf = new jsPDF("p", "mm", "a4");
+    const w = pdf.internal.pageSize.getWidth();
+    const h = (canvas.height * w) / canvas.width;
+    pdf.addImage(imgData, "PNG", 0, 0, w, h);
+    pdf.save(`payslip-${emp.name?.replace(/\s+/g, "-")}-${data.month?.replace(/\s+/g, "-")}.pdf`);
+  }
+
   return (
-    <div className="payslip-doc">
-      <button className="payslip-doc-close" onClick={onClose}><i className="fas fa-times" /></button>
+    <div className="payslip-doc" id="payslip-print">
+      <div className="payslip-doc-close" style={{ display: "flex", gap: 8 }}>
+        <button style={{ background: "#f1f1f1", border: "none", width: 32, height: 32, borderRadius: "50%", cursor: "pointer", fontSize: "0.85rem", color: "#666", display: "flex", alignItems: "center", justifyContent: "center" }} onClick={downloadPDF} title="Download PDF"><i className="fas fa-download" /></button>
+        <button style={{ background: "#f1f1f1", border: "none", width: 32, height: 32, borderRadius: "50%", cursor: "pointer", fontSize: "0.85rem", color: "#666", display: "flex", alignItems: "center", justifyContent: "center" }} onClick={onClose}><i className="fas fa-times" /></button>
+      </div>
 
       <div className="payslip-doc-header">
         <div>

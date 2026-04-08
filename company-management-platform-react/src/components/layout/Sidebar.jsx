@@ -10,8 +10,11 @@ const navItems = [
     { to: "/attendance", icon: "fa-clock", label: "Attendance" },
     { to: "/leave", icon: "fa-calendar-alt", label: "Leave", badge: true },
     { to: "/payroll", icon: "fa-wallet", label: "Payroll", adminOnly: true },
+    { to: "/expenses", icon: "fa-receipt", label: "Expenses" },
   ]},
   { section: "Organization", items: [
+    { to: "/assets", icon: "fa-laptop", label: "Assets", adminOnly: true },
+    { to: "/reports", icon: "fa-chart-bar", label: "Reports", adminOnly: true },
     { to: "/settings", icon: "fa-cog", label: "Settings", adminOnly: true },
   ]},
 ];

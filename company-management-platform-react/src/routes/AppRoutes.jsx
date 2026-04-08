@@ -9,6 +9,9 @@ import EmployeeProfilePage from "../features/employees/EmployeeProfilePage";
 import AttendancePage from "../features/attendance/AttendancePage";
 import LeavePage from "../features/leave/LeavePage";
 import PayrollPage from "../features/payroll/PayrollPage";
+import ExpensesPage from "../features/expenses/ExpensesPage";
+import AssetsPage from "../features/assets/AssetsPage";
+import ReportsPage from "../features/reports/ReportsPage";
 import SettingsPage from "../features/settings/SettingsPage";
 import ProfilePage from "../features/profile/ProfilePage";
 
@@ -41,6 +44,9 @@ export default function AppRoutes() {
         <Route path="/attendance" element={<AttendancePage />} />
         <Route path="/leave" element={<LeavePage />} />
         <Route path="/payroll" element={<PayrollPage />} />
+        <Route path="/expenses" element={<ExpensesPage />} />
+        <Route path="/assets" element={<AssetsPage />} />
+        <Route path="/reports" element={<ReportsPage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/profile" element={<ProfilePage />} />
       </Route>

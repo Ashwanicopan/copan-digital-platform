@@ -1779,3 +1779,22 @@ tbody tr:hover { background: var(--gray-50); }
   .settings-form-grid { grid-template-columns: 1fr; }
   .profile-details-grid { grid-template-columns: 1fr; }
 }
+
+/* Mobile: sidebar collapses, content full width */
+@media (max-width: 640px) {
+  .sidebar { width: 60px; overflow: hidden; }
+  .sidebar .sidebar-brand img { height: 20px; }
+  .sidebar .nav-section-title, .sidebar .user-info, .sidebar .nav-item span:not(.nav-badge) { display: none; }
+  .sidebar .nav-item { justify-content: center; padding: 10px; }
+  .sidebar .nav-item i { margin: 0; }
+  .sidebar .sidebar-user { justify-content: center; }
+  .main-area { margin-left: 60px; }
+  .top-header h1 { font-size: 1rem; }
+  .search-box { display: none; }
+  .stats-grid { grid-template-columns: 1fr 1fr !important; }
+  .welcome-banner { flex-direction: column; }
+  .welcome-clock { position: static; text-align: center; }
+  .table-container { font-size: 0.78rem; }
+  .modal { width: 95%; max-width: 95%; }
+  .stepper-modal { max-width: 95%; }
+}
