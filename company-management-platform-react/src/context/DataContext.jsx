@@ -593,7 +593,7 @@ export function DataProvider({ children }) {
       const { data: existing } = await supabase.from("attendance").select("id").eq("employee_id", employeeId).eq("date", today).single();
 
       let result;
-      const payload = { clock_in: now, status: "present", work_mode: workMode, late_minutes: lateMinutes };
+      const payload = { clock_in: now, clock_out: null, hours: null, status: "present", work_mode: workMode, late_minutes: lateMinutes };
       if (existing) {
         result = await supabase.from("attendance").update(payload).eq("id", existing.id).select().single();
       } else {

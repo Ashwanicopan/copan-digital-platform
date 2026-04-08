@@ -92,13 +92,23 @@ export default function AttendancePage() {
                 <button className="btn-clock btn-clock-out" onClick={handleClockOut}>Clock Out</button>
               </>
             ) : hasClockedOut ? (
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
                 <span style={{ fontSize: "0.82rem", color: "var(--gray-500)", fontWeight: 600 }}>
                   <i className="fas fa-check-double" /> {myAttendance.clockIn} - {myAttendance.clockOut} ({myAttendance.hours ? myAttendance.hours + "h" : ""})
                 </span>
-                <button className="btn-clock btn-clock-in" style={{ fontSize: "0.78rem", padding: "6px 14px" }} onClick={() => handleClockIn(myAttendance.workMode || "office")}>
-                  <i className="fas fa-redo" style={{ marginRight: 4 }} />Clock In Again
-                </button>
+                {myAttendance.lateMinutes > 0 && (
+                  <span style={{ background: "var(--danger-bg)", color: "var(--danger)", padding: "2px 8px", borderRadius: 4, fontSize: "0.72rem", fontWeight: 600 }}>
+                    Was late by {Math.floor(myAttendance.lateMinutes / 60) > 0 ? Math.floor(myAttendance.lateMinutes / 60) + "h " : ""}{myAttendance.lateMinutes % 60}m
+                  </span>
+                )}
+                <div style={{ display: "flex", gap: 6 }}>
+                  <button className="btn-clock btn-clock-in" style={{ fontSize: "0.78rem", padding: "6px 14px" }} onClick={() => handleClockIn("office")}>
+                    <i className="fas fa-building" style={{ marginRight: 4 }} />Office
+                  </button>
+                  <button className="btn-clock btn-clock-in" style={{ fontSize: "0.78rem", padding: "6px 14px", background: "var(--info)", color: "#fff" }} onClick={() => handleClockIn("wfh")}>
+                    <i className="fas fa-home" style={{ marginRight: 4 }} />WFH
+                  </button>
+                </div>
               </div>
             ) : (
               <button className="btn-clock btn-clock-in" onClick={() => handleClockIn("office")}>Clock In</button>
@@ -129,14 +139,15 @@ export default function AttendancePage() {
           </div>
           <div className="table-container">
             <table>
-              <thead><tr><th>Employee</th><th>Clock In</th><th>Clock Out</th><th>Hours</th><th>Status</th></tr></thead>
+              <thead><tr><th>Employee</th><th>Clock In</th><th>Clock Out</th><th>Hours</th><th>Mode</th><th>Late</th><th>Status</th></tr></thead>
               <tbody>
                 {logs.length === 0 ? (
-                  <tr><td colSpan={5} style={{ textAlign: "center", color: "var(--gray-400)", padding: 32 }}>No attendance records for this date</td></tr>
+                  <tr><td colSpan={7} style={{ textAlign: "center", color: "var(--gray-400)", padding: 32 }}>No attendance records for this date</td></tr>
                 ) : (
                   logs.map((log, i) => {
                     const emp = employees.find((e) => e.id === log.employeeId);
                     if (!emp) return null;
+                    const late = log.lateMinutes || 0;
                     return (
                       <tr key={`${log.employeeId}-${i}`}>
                         <td>
@@ -148,6 +159,20 @@ export default function AttendancePage() {
                         <td>{log.clockIn || "-"}</td>
                         <td>{log.clockOut || "-"}</td>
                         <td>{log.hours ? log.hours + " hrs" : "-"}</td>
+                        <td>
+                          <span style={{ padding: "3px 8px", borderRadius: 4, fontSize: "0.72rem", fontWeight: 600, background: log.workMode === "wfh" ? "var(--info-bg, #ecfeff)" : "var(--gray-50)", color: log.workMode === "wfh" ? "var(--info)" : "var(--gray-600)" }}>
+                            {log.workMode === "wfh" ? "WFH" : "Office"}
+                          </span>
+                        </td>
+                        <td>
+                          {late > 0 ? (
+                            <span style={{ padding: "3px 8px", borderRadius: 4, fontSize: "0.72rem", fontWeight: 600, background: "var(--danger-bg)", color: "var(--danger)" }}>
+                              {Math.floor(late / 60) > 0 ? Math.floor(late / 60) + "h " : ""}{late % 60}m late
+                            </span>
+                          ) : log.clockIn ? (
+                            <span style={{ padding: "3px 8px", borderRadius: 4, fontSize: "0.72rem", fontWeight: 600, background: "var(--success-bg)", color: "var(--success)" }}>On time</span>
+                          ) : "-"}
+                        </td>
                         <td><Badge status={log.status} /></td>
                       </tr>
                     );
