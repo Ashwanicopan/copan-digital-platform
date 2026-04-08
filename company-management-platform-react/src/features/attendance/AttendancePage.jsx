@@ -42,9 +42,9 @@ export default function AttendancePage() {
     if (late > 0) {
       const h = Math.floor(late / 60);
       const m = late % 60;
-      alert(`Clocked in at ${t}${workMode === "wfh" ? " (WFH)" : ""}\n\n⚠️ You are late by ${h > 0 ? h + "h " : ""}${m}m. Please be on time.`);
+      alert(`Clocked in at ${t}${workMode === "wfh" ? " (Work From Home)" : ""}\n\n⚠️ You are late by ${h > 0 ? h + "h " : ""}${m}m. Please be on time.`);
     } else {
-      alert(`Clocked in at ${t}${workMode === "wfh" ? " (WFH)" : ""} ✓ On time!`);
+      alert(`Clocked in at ${t}${workMode === "wfh" ? " (Work From Home)" : ""} ✓ On time!`);
     }
   }
 
@@ -76,8 +76,8 @@ export default function AttendancePage() {
           <div className="clock-actions">
             {!myAttendance || (!myAttendance.clockIn) ? (
               <div style={{ display: "flex", gap: 8 }}>
-                <button className="btn-clock btn-clock-in" onClick={() => handleClockIn("office")}><i className="fas fa-building" style={{ marginRight: 6 }} />Clock In (Office)</button>
-                <button className="btn-clock btn-clock-in" style={{ background: "var(--info)", color: "#fff" }} onClick={() => handleClockIn("wfh")}><i className="fas fa-home" style={{ marginRight: 6 }} />Clock In (WFH)</button>
+                <button className="btn-clock btn-clock-in" onClick={() => handleClockIn("office")}><i className="fas fa-building" style={{ marginRight: 6 }} />Clock In</button>
+                <button className="btn-clock btn-clock-in" style={{ background: "var(--info)", color: "#fff" }} onClick={() => handleClockIn("wfh")}><i className="fas fa-home" style={{ marginRight: 6 }} />Work From Home</button>
               </div>
             ) : isClockedIn ? (
               <>
@@ -103,10 +103,10 @@ export default function AttendancePage() {
                 )}
                 <div style={{ display: "flex", gap: 6 }}>
                   <button className="btn-clock btn-clock-in" style={{ fontSize: "0.78rem", padding: "6px 14px" }} onClick={() => handleClockIn("office")}>
-                    <i className="fas fa-building" style={{ marginRight: 4 }} />Office
+                    <i className="fas fa-sign-in-alt" style={{ marginRight: 4 }} />Clock In
                   </button>
                   <button className="btn-clock btn-clock-in" style={{ fontSize: "0.78rem", padding: "6px 14px", background: "var(--info)", color: "#fff" }} onClick={() => handleClockIn("wfh")}>
-                    <i className="fas fa-home" style={{ marginRight: 4 }} />WFH
+                    <i className="fas fa-home" style={{ marginRight: 4 }} />Work From Home
                   </button>
                 </div>
               </div>
@@ -161,7 +161,7 @@ export default function AttendancePage() {
                         <td>{log.hours ? log.hours + " hrs" : "-"}</td>
                         <td>
                           <span style={{ padding: "3px 8px", borderRadius: 4, fontSize: "0.72rem", fontWeight: 600, background: log.workMode === "wfh" ? "var(--info-bg, #ecfeff)" : "var(--gray-50)", color: log.workMode === "wfh" ? "var(--info)" : "var(--gray-600)" }}>
-                            {log.workMode === "wfh" ? "WFH" : "Office"}
+                            {log.workMode === "wfh" ? "Work From Home" : "In Office"}
                           </span>
                         </td>
                         <td>

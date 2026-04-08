@@ -85,10 +85,10 @@ export default function WelcomeBannerClock({ greeting, userName, today, pending,
         {!isClockedIn && !hasClockedOut ? (
           <div style={{ display: "flex", gap: 8 }}>
             <button className="welcome-clock-btn clock-in" onClick={() => handleClockIn("office")}>
-              <i className="fas fa-building" /> Office
+              <i className="fas fa-sign-in-alt" /> Clock In
             </button>
             <button className="welcome-clock-btn clock-in" style={{ background: "rgba(255,255,255,0.15)", backdropFilter: "blur(4px)" }} onClick={() => handleClockIn("wfh")}>
-              <i className="fas fa-home" /> WFH
+              <i className="fas fa-home" /> Work From Home
             </button>
           </div>
         ) : isClockedIn ? (
@@ -102,10 +102,10 @@ export default function WelcomeBannerClock({ greeting, userName, today, pending,
             </span>
             <div style={{ display: "flex", gap: 8 }}>
               <button className="welcome-clock-btn clock-in" style={{ fontSize: "0.75rem", padding: "6px 14px" }} onClick={() => handleClockIn("office")}>
-                <i className="fas fa-building" /> Office
+                <i className="fas fa-sign-in-alt" /> Clock In
               </button>
               <button className="welcome-clock-btn clock-in" style={{ fontSize: "0.75rem", padding: "6px 14px", background: "rgba(255,255,255,0.15)", backdropFilter: "blur(4px)" }} onClick={() => handleClockIn("wfh")}>
-                <i className="fas fa-home" /> WFH
+                <i className="fas fa-home" /> Work From Home
               </button>
             </div>
           </div>
